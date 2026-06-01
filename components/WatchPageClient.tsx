@@ -1,0 +1,142 @@
+"use client";
+
+import { useState } from "react";
+import VideoPlayer from "@/components/VideoPlayer";
+import EpisodeSelector from "@/components/EpisodeSelector";
+import type { MovieDetail } from "@/types/api";
+
+interface WatchPageClientProps {
+  movie: MovieDetail;
+  posterUrl: string;
+}
+
+export default function WatchPageClient({ movie, posterUrl }: WatchPageClientProps) {
+  const [currentServerIndex, setCurrentServerIndex] = useState(0);
+  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
+
+  const episodes = movie.episodes || [];
+  const currentServer = episodes[currentServerIndex];
+  const serverData = currentServer?.server_data || [];
+  const currentEpisode = serverData[currentEpisodeIndex];
+
+  const handleEpisodeSelect = (episodeIndex: number) => {
+    setCurrentEpisodeIndex(episodeIndex);
+  };
+
+  const handleServerChange = (serverIndex: number) => {
+    setCurrentServerIndex(serverIndex);
+    setCurrentEpisodeIndex(0);
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950">
+      <div className="container mx-auto px-4 py-8">
+        {/* Video Player */}
+        <div className="mb-8 relative z-10">
+          {currentEpisode ? (
+            <VideoPlayer
+              key={`${currentServerIndex}-${currentEpisodeIndex}`}
+              poster={posterUrl}
+              videoUrl={currentEpisode.link_m3u8}
+              embedUrl={currentEpisode.link_embed}
+            />
+          ) : (
+            <div className="relative w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+              <div className="text-center p-8">
+                <p className="text-zinc-400 text-lg mb-2">Không tìm thấy link phim</p>
+                <p className="text-zinc-500 text-sm">Phim này hiện không có sẵn để xem</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Episode Selector */}
+        <div className="relative z-30">
+          {episodes.length > 0 && serverData.length > 0 ? (
+            <EpisodeSelector
+              episodes={episodes}
+              currentServerIndex={currentServerIndex}
+              currentEpisodeIndex={currentEpisodeIndex}
+              onSelectEpisode={handleEpisodeSelect}
+              onSelectServer={handleServerChange}
+            />
+          ) : (
+            <div className="mb-8 p-4 bg-zinc-900 rounded-lg">
+              <p className="text-zinc-400 text-sm">Không có tập phim nào</p>
+            </div>
+          )}
+        </div>
+
+        {/* Movie Info */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            {movie.name}
+          </h1>
+          {movie.origin_name && (
+            <p className="text-lg text-zinc-400 mb-4">{movie.origin_name}</p>
+          )}
+
+          <div className="flex flex-wrap gap-3 text-sm mb-4">
+            <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+              {movie.year}
+            </span>
+            {movie.quality && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.quality}
+              </span>
+            )}
+            {movie.lang && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.lang}
+              </span>
+            )}
+            {movie.time && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.time}
+              </span>
+            )}
+          </div>
+
+          {/* Categories */}
+          {movie.category && movie.category.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {movie.category.map((cat) => (
+                <span key={cat.id} className="text-sm text-blue-400">
+                  {cat.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Countries */}
+          {movie.country && movie.country.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {movie.country.map((country) => (
+                <span key={country.id} className="text-sm text-zinc-400">
+                  {country.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Actors */}
+          {movie.actor && movie.actor.length > 0 && (
+            <div className="mb-4">
+              <span className="text-sm text-zinc-500">Diễn viên: </span>
+              <span className="text-sm text-zinc-400">
+                {movie.actor.join(", ")}
+              </span>
+            </div>
+          )}
+
+          {/* Description */}
+          {movie.content && (
+            <div className="text-zinc-300 leading-relaxed">
+              <p>{movie.content}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
