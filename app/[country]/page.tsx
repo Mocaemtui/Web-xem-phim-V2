@@ -22,7 +22,7 @@ export default async function CountryPage({ params }: Props) {
   const slug = params.country.replace(/^phim-/, "");
 
   // Fetch movies for the country (page 1, limit 24 by default)
-  const data = await getQuocGiaDetails?.(slug, { page: 1, limit: 24 });
+  const data = await getQuocGiaDetails(slug, { page: 1, limit: 24 });
 
   if (!data?.data?.items?.length) {
     // No data → 404 page
