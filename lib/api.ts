@@ -59,6 +59,60 @@ export async function getPhimBo(
   );
 }
 
+export async function getPhimLe(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-le?page=${page}&limit=${limit}`
+  );
+}
+
+export async function getPhimViet(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-viet?page=${page}&limit=${limit}`
+  );
+}
+
+export async function getPhimAuMy(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-au-my?page=${page}&limit=${limit}`
+  );
+}
+
+export async function getPhimHan(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-han?page=${page}&limit=${limit}`
+  );
+}
+
+export async function getPhimNhat(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-nhat?page=${page}&limit=${limit}`
+  );
+}
+
+export async function getPhimTrung(
+  page: number = 1,
+  limit: number = 20
+): Promise<ApiResponse<MovieListResponse> | null> {
+  return fetchAPI<MovieListResponse>(
+    `/v1/api/danh-sach/phim-trung?page=${page}&limit=${limit}`
+  );
+}
+
 export async function searchPhim(
   keyword: string
 ): Promise<ApiResponse<MovieListResponse> | null> {

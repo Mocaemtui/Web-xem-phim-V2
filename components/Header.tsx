@@ -3,13 +3,12 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Menu, X, ChevronDown } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 
 export default function Header() {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub";
 
@@ -36,40 +35,6 @@ export default function Header() {
             <Link href="/" className="text-sm text-zinc-300 hover:text-white transition-colors">
               Trang chủ
             </Link>
-            <div className="relative">
-              <button
-                onClick={() => setFilterOpen(!filterOpen)}
-                className="flex items-center gap-1 text-sm text-zinc-300 hover:text-white transition-colors"
-              >
-                Lọc phim
-                <ChevronDown size={16} />
-              </button>
-              {filterOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-4">
-                  <Link
-                    href="/the-loai"
-                    className="block py-2 text-sm text-zinc-300 hover:text-white transition-colors"
-                    onClick={() => setFilterOpen(false)}
-                  >
-                    Theo thể loại
-                  </Link>
-                  <Link
-                    href="/quoc-gia"
-                    className="block py-2 text-sm text-zinc-300 hover:text-white transition-colors"
-                    onClick={() => setFilterOpen(false)}
-                  >
-                    Theo quốc gia
-                  </Link>
-                  <Link
-                    href="/nam"
-                    className="block py-2 text-sm text-zinc-300 hover:text-white transition-colors"
-                    onClick={() => setFilterOpen(false)}
-                  >
-                    Theo năm
-                  </Link>
-                </div>
-              )}
-            </div>
           </nav>
 
           {/* Search & Mobile Menu */}
@@ -111,15 +76,6 @@ export default function Header() {
             <div className="flex flex-col gap-4">
               <Link href="/" className="text-sm text-zinc-300 hover:text-white transition-colors">
                 Trang chủ
-              </Link>
-              <Link href="/the-loai" className="text-sm text-zinc-300 hover:text-white transition-colors">
-                Theo thể loại
-              </Link>
-              <Link href="/quoc-gia" className="text-sm text-zinc-300 hover:text-white transition-colors">
-                Theo quốc gia
-              </Link>
-              <Link href="/nam" className="text-sm text-zinc-300 hover:text-white transition-colors">
-                Theo năm
               </Link>
             </div>
           </nav>

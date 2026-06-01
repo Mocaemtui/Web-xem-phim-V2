@@ -61,10 +61,13 @@ export interface HomeData {
 
 export interface MovieListResponse {
   items: Movie[];
-  pagination: {
-    currentPage: number;
-    totalItems: number;
-    totalPages: number;
+  params: {
+    pagination: {
+      totalItems: number;
+      totalItemsPerPage: number;
+      currentPage: number;
+      pageRanges: number;
+    };
   };
 }
 
