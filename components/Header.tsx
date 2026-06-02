@@ -26,7 +26,8 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-white">
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white">
+            <img src="/icon-192x192.png" alt="Mocaemtui Logo" className="w-8 h-8 rounded-full object-cover" />
             {siteName}
           </Link>
 
