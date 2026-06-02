@@ -17,7 +17,7 @@ export async function fetchAPI<T>(endpoint: string): Promise<ApiResponse<T> | nu
     const url = `${API_BASE_URL}${endpoint}`;
     
     const response = await fetch(url, {
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      cache: 'no-store', // Disable caching for client-side calls
     });
 
     if (!response.ok) {
@@ -33,6 +33,7 @@ export async function fetchAPI<T>(endpoint: string): Promise<ApiResponse<T> | nu
     
     return data;
   } catch (error) {
+    console.error('API Error:', error);
     return null;
   }
 }
