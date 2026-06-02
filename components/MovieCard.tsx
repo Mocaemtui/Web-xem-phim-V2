@@ -12,17 +12,28 @@ export default function MovieCard({ movie, posterUrl }: MovieCardProps) {
     return null;
   }
 
-  const finalPosterUrl = posterUrl || (movie.poster_url.startsWith('http') ? movie.poster_url : `https://img.ophim.live/uploads/movies/${movie.poster_url}`);
+  // Use thumb_url for better quality in search/filter results
+  let finalPosterUrl = posterUrl;
+  if (!finalPosterUrl) {
+    if (movie.thumb_url && movie.thumb_url.startsWith('http')) {
+      finalPosterUrl = movie.thumb_url;
+    } else if (movie.poster_url.startsWith('http')) {
+      finalPosterUrl = movie.poster_url;
+    } else {
+      // Use higher quality URL
+      finalPosterUrl = `https://img.ophim.live/uploads/movies/${movie.poster_url}`;
+    }
+  }
 
   return (
     <Link href={`/phim/${encodeURIComponent(movie.slug)}`} className="group">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
         <Image
           src={finalPosterUrl}
           alt={movie.name}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
           unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, Filter } from "lucide-react";
 
 export default function Header() {
   const router = useRouter();
@@ -34,6 +34,10 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm text-zinc-300 hover:text-white transition-colors">
               Trang chủ
+            </Link>
+            <Link href="/filter" className="text-sm text-zinc-300 hover:text-white transition-colors flex items-center gap-1">
+              <Filter size={16} />
+              Bộ lọc
             </Link>
           </nav>
 
@@ -76,6 +80,10 @@ export default function Header() {
             <div className="flex flex-col gap-4">
               <Link href="/" className="text-sm text-zinc-300 hover:text-white transition-colors">
                 Trang chủ
+              </Link>
+              <Link href="/filter" className="text-sm text-zinc-300 hover:text-white transition-colors flex items-center gap-1">
+                <Filter size={16} />
+                Bộ lọc
               </Link>
             </div>
           </nav>
