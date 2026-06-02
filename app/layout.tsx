@@ -13,6 +13,22 @@ const inter = Inter({
 export const metadata = {
   title: process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub",
   description: "Xem phim online miễn phí",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#09090b",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
