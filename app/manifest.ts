@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'MovieHub - Xem Phim Online',
-    short_name: 'MovieHub',
+    name: 'Mocaemtui - Xem Phim Online',
+    short_name: 'Mocaemtui',
     description: 'Website xem phim trực tuyến cực kỳ mượt mà',
     start_url: '/',
     display: 'standalone',

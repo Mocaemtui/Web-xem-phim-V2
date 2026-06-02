@@ -10,7 +10,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Mocaemtui";
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();

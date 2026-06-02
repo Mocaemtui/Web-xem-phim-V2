@@ -11,12 +11,12 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub",
+  title: process.env.NEXT_PUBLIC_SITE_NAME || "Mocaemtui",
   description: "Xem phim online miễn phí",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub",
+    title: process.env.NEXT_PUBLIC_SITE_NAME || "Mocaemtui",
   },
   formatDetection: {
     telephone: false,

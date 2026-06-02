@@ -1,5 +1,5 @@
 export default function Footer() {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "MovieHub";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Mocaemtui";
   const currentYear = new Date().getFullYear();
 
   return (
