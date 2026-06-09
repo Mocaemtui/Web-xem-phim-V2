@@ -17,7 +17,7 @@ export async function fetchAPI<T>(endpoint: string): Promise<ApiResponse<T> | nu
     const url = `${API_BASE_URL}${endpoint}`;
     
     const response = await fetch(url, {
-      cache: 'no-store', // Disable caching for client-side calls
+      next: { revalidate: 3600 }, // Cache API trong 1 giờ để tăng tốc độ tải trang
     });
 
     if (!response.ok) {

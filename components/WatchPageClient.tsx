@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import VideoPlayer from "@/components/VideoPlayer";
 import EpisodeSelector from "@/components/EpisodeSelector";
 import type { MovieDetail } from "@/types/api";
+import { saveWatchHistory, getWatchHistory } from "@/lib/watchHistory";
 
 interface WatchPageClientProps {
   movie: MovieDetail;
@@ -13,11 +14,38 @@ interface WatchPageClientProps {
 export default function WatchPageClient({ movie, posterUrl }: WatchPageClientProps) {
   const [currentServerIndex, setCurrentServerIndex] = useState(0);
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
+  const [isRestored, setIsRestored] = useState(false);
+
+  useEffect(() => {
+    if (!isRestored) {
+      const history = getWatchHistory();
+      const item = history.find(i => i.slug === movie.slug);
+      if (item) {
+        if (movie.episodes?.[item.currentServerIndex]?.server_data?.[item.currentEpisodeIndex]) {
+          setCurrentServerIndex(item.currentServerIndex);
+          setCurrentEpisodeIndex(item.currentEpisodeIndex);
+        }
+      }
+      setIsRestored(true);
+    }
+  }, [movie, isRestored]);
 
   const episodes = movie.episodes || [];
   const currentServer = episodes[currentServerIndex];
   const serverData = currentServer?.server_data || [];
   const currentEpisode = serverData[currentEpisodeIndex];
+
+  // Save watch history whenever episode or server changes
+  useEffect(() => {
+    if (isRestored && currentEpisode) {
+      saveWatchHistory(
+        movie,
+        currentEpisode.name || `Tập ${currentEpisodeIndex + 1}`,
+        currentServerIndex,
+        currentEpisodeIndex
+      );
+    }
+  }, [movie, currentEpisode, currentServerIndex, currentEpisodeIndex, isRestored]);
 
   const handleEpisodeSelect = (episodeIndex: number) => {
     setCurrentEpisodeIndex(episodeIndex);
@@ -131,9 +159,10 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
 
           {/* Description */}
           {movie.content && (
-            <div className="text-zinc-300 leading-relaxed">
-              <p>{movie.content}</p>
-            </div>
+            <div 
+              className="text-zinc-300 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: movie.content }}
+            />
           )}
         </div>
       </div>

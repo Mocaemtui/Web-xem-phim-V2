@@ -15,7 +15,7 @@ export default async function SearchPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <SectionTitle title={`Kết quả tìm kiếm: &ldquo;${decodedKeyword}&rdquo;`} />
+      <SectionTitle title={`Kết quả tìm kiếm: "${decodedKeyword}"`} />
       
       {searchResults?.data?.items && searchResults.data.items.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -26,7 +26,7 @@ export default async function SearchPage({ params }: PageProps) {
       ) : (
         <div className="text-center py-16">
           <p className="text-zinc-400 text-lg">
-            Không tìm thấy phim nào với từ khóa &ldquo;{decodedKeyword}&rdquo;
+            Không tìm thấy phim nào với từ khóa "{decodedKeyword}"
           </p>
         </div>
       )}

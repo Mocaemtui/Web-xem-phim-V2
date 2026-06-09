@@ -1,7 +1,7 @@
 import MovieCardWrapper from "@/components/MovieCardWrapper";
 import SectionTitle from "@/components/SectionTitle";
 import Pagination from "@/components/Pagination";
-import { getPhimBo } from "@/lib/api";
+import { getDanhSach } from "@/lib/api";
 
 interface PageProps {
   searchParams: Promise<{
@@ -9,10 +9,10 @@ interface PageProps {
   }>;
 }
 
-export default async function PhimBoPage({ searchParams }: PageProps) {
+export default async function CartoonPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parseInt(params.page || "1", 10);
-  const moviesData = await getPhimBo(page, 30);
+  const moviesData = await getDanhSach("hoat-hinh", { page, limit: 30, country: "au-my" });
 
   const pagination = moviesData?.data?.params?.pagination;
   const currentPage = pagination?.currentPage || page;
@@ -22,7 +22,7 @@ export default async function PhimBoPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <SectionTitle title="Phim Bộ" />
+      <SectionTitle title="Cartoon (Hoạt Hình Âu Mỹ)" />
       <div className="text-white text-sm mb-4">
         Hiển thị {(currentPage - 1) * totalItemsPerPage + 1}-{Math.min(currentPage * totalItemsPerPage, totalItems)} của {totalItems} phim
       </div>
@@ -34,7 +34,7 @@ export default async function PhimBoPage({ searchParams }: PageProps) {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        baseUrl="/phim-bo"
+        baseUrl="/cartoon"
       />
     </div>
   );

@@ -26,11 +26,19 @@ export default async function MoviePage({ params }: PageProps) {
     notFound();
   }
 
+  const movie = movieData.data.item;
+
+
+
   return (
-    <MovieDetail
-      movie={movieData.data.item}
-      images={imagesData?.data || { images: [] }}
-      peoples={peoplesData?.data || { peoples: [] }}
-    />
+    <>
+      <MovieDetail
+        movie={movie}
+        images={imagesData?.data || { images: [] }}
+        peoples={peoplesData?.data || { peoples: [] }}
+      />
+
+
+    </>
   );
 }

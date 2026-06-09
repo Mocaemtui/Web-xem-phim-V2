@@ -135,9 +135,10 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
 
             {/* Description */}
             {movie.content && (
-              <div className="text-zinc-300 leading-relaxed">
-                <p>{movie.content}</p>
-              </div>
+              <div 
+                className="text-zinc-300 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: movie.content }}
+              />
             )}
 
             {/* Director */}

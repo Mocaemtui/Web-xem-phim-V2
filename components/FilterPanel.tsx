@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, SlidersHorizontal, ChevronUp } from "lucide-react";
 import type { Genre, Country } from "@/types/api";
 
 const NAM_PHAT_HANH = Array.from({ length: 30 }, (_, i) => 2024 - i);
@@ -40,6 +40,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
     year?: string;
     danhMuc?: string;
   }>({});
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleFilterSelect = (
     type: keyof typeof selectedFilters,
@@ -50,8 +51,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
       [type]: selectedFilters[type] === value ? undefined : value,
     };
     setSelectedFilters(newFilters);
-    
-    // Convert to the format expected by parent
+
     const filtersForParent = {
       theLoai: newFilters.theLoaiSlug,
       quocGia: newFilters.quocGiaSlug,
@@ -64,7 +64,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
   const clearFilter = (type: keyof typeof selectedFilters) => {
     const newFilters = { ...selectedFilters, [type]: undefined };
     setSelectedFilters(newFilters);
-    
+
     const filtersForParent = {
       theLoai: newFilters.theLoaiSlug,
       quocGia: newFilters.quocGiaSlug,
@@ -83,27 +83,57 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
     (value) => value !== undefined
   );
 
+  const activeCount = Object.values(selectedFilters).filter(
+    (v) => v !== undefined
+  ).length;
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-          Bộ Lọc
-        </h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Mobile toggle button */}
+          <button
+            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-md bg-blue-500 text-white text-sm font-medium transition-colors active:bg-blue-600"
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
+          >
+            {isMobileOpen ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <SlidersHorizontal className="w-4 h-4" />
+            )}
+            <span>{isMobileOpen ? "Ẩn bộ lọc" : "Bộ lọc"}</span>
+            {activeCount > 0 && (
+              <span className="ml-1 bg-white text-blue-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {activeCount}
+              </span>
+            )}
+          </button>
+          {/* Desktop title */}
+          <h2 className="hidden lg:block text-xl font-bold text-gray-800 dark:text-white">
+            Bộ Lọc
+          </h2>
+        </div>
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-red-500 hover:text-red-700 transition-colors"
+            className="text-sm text-red-500 hover:text-red-700 transition-colors whitespace-nowrap"
           >
             Xóa tất cả
           </button>
         )}
       </div>
 
-      <div className="space-y-4">
+      {/* Filter sections – hidden on mobile until toggled, always visible on lg+ */}
+      <div
+        className={`mt-4 space-y-4 overflow-y-auto max-h-[70vh] lg:max-h-none lg:overflow-visible ${
+          isMobileOpen ? "block" : "hidden"
+        } lg:block`}
+      >
         {/* Danh Mục */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">Danh Mục</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm sm:text-base">Danh Mục</span>
             {selectedFilters.danhMuc && (
               <button
                 onClick={() => clearFilter("danhMuc")}
@@ -113,12 +143,12 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {DANH_MUC_LIST.map((item) => (
               <button
                 key={item.slug}
                 onClick={() => handleFilterSelect("danhMuc", item.slug)}
-                className={`px-3 py-1 text-sm rounded-md transition-all ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
                   selectedFilters.danhMuc === item.slug
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -133,7 +163,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
         {/* Thể Loại */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">Thể Loại</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm sm:text-base">Thể Loại</span>
             {selectedFilters.theLoaiSlug && (
               <button
                 onClick={() => clearFilter("theLoaiSlug")}
@@ -143,12 +173,12 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {theLoaiList.map((item) => (
               <button
                 key={item.slug}
                 onClick={() => handleFilterSelect("theLoaiSlug", item.slug)}
-                className={`px-3 py-1 text-sm rounded-md transition-all ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
                   selectedFilters.theLoaiSlug === item.slug
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -163,7 +193,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
         {/* Quốc Gia */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">Quốc Gia</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm sm:text-base">Quốc Gia</span>
             {selectedFilters.quocGiaSlug && (
               <button
                 onClick={() => clearFilter("quocGiaSlug")}
@@ -173,12 +203,12 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {quocGiaList.map((item) => (
               <button
                 key={item.slug}
                 onClick={() => handleFilterSelect("quocGiaSlug", item.slug)}
-                className={`px-3 py-1 text-sm rounded-md transition-all ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
                   selectedFilters.quocGiaSlug === item.slug
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -193,7 +223,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
         {/* Năm Phát Hành */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">Năm Phát Hành</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm sm:text-base">Năm Phát Hành</span>
             {selectedFilters.year && (
               <button
                 onClick={() => clearFilter("year")}
@@ -203,12 +233,12 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {NAM_PHAT_HANH.map((year) => (
               <button
                 key={year}
                 onClick={() => handleFilterSelect("year", year.toString())}
-                className={`px-3 py-1 text-sm rounded-md transition-all ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
                   selectedFilters.year === year.toString()
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"

@@ -66,7 +66,7 @@ export default function EpisodeSelector({
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
         {serverData.map((episode, index) => (
           <button
-            key={episode.slug || index}
+            key={`${episode.slug}-${index}`}
             type="button"
             onClick={() => onSelectEpisode(index)}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
