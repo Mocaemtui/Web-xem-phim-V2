@@ -12,18 +12,10 @@ export default function MovieCard({ movie, posterUrl }: MovieCardProps) {
     return null;
   }
 
-  // Use thumb_url for better quality in search/filter results
-  let finalPosterUrl = posterUrl;
-  if (!finalPosterUrl) {
-    if (movie.thumb_url && movie.thumb_url.startsWith('http')) {
-      finalPosterUrl = movie.thumb_url;
-    } else if (movie.poster_url.startsWith('http')) {
-      finalPosterUrl = movie.poster_url;
-    } else {
-      // Use higher quality URL
-      finalPosterUrl = `https://img.ophim.live/uploads/movies/${movie.poster_url}`;
-    }
-  }
+  // Synchronize image source logic to match MovieDetail.tsx poster (Ophim thumb_url)
+  const finalPosterUrl = movie.thumb_url
+    ? (movie.thumb_url.startsWith('http') ? movie.thumb_url : `https://img.ophim.live/uploads/movies/${movie.thumb_url}`)
+    : (movie.poster_url.startsWith('http') ? movie.poster_url : `https://img.ophim.live/uploads/movies/${movie.poster_url}`);
 
   return (
     <Link href={`/phim/${encodeURIComponent(movie.slug)}`} className="group">

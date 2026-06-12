@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import FilterPanel from "@/components/FilterPanel";
 import MovieCard from "@/components/MovieCard";
 import SectionTitle from "@/components/SectionTitle";
@@ -27,6 +27,7 @@ const DANH_MUC_LIST = [
 
 function FilterContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [movies, setMovies] = useState<MovieListResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,18 +35,7 @@ function FilterContent() {
   const [title, setTitle] = useState("Bộ Lọc Phim");
   const [theLoaiList, setTheLoaiList] = useState<Genre[]>([]);
   const [quocGiaList, setQuocGiaList] = useState<Country[]>([]);
-  const [posterUrls, setPosterUrls] = useState<Record<string, string>>({});
 
-  const fetchPosterUrls = useCallback(async (movieList: Movie[]) => {
-    const urls: Record<string, string> = {};
-    await Promise.all(
-      movieList.map(async (movie) => {
-        const url = await getMoviePosterUrl(movie.slug);
-        if (url) urls[movie._id] = url;
-      })
-    );
-    setPosterUrls(urls);
-  }, []);
 
   const updateTitle = useCallback(() => {
     const parts: string[] = [];
@@ -87,13 +77,12 @@ function FilterContent() {
       }
       setMovies(data);
       updateTitle();
-      if (data?.items) await fetchPosterUrls(data.items);
     } catch (e) {
       console.error("Error fetching movies:", e);
     } finally {
       setLoading(false);
     }
-  }, [filters, updateTitle, fetchPosterUrls]);
+  }, [filters, updateTitle]);
 
   const fetchFilterData = useCallback(async () => {
     try {
@@ -108,8 +97,22 @@ function FilterContent() {
     }
   }, []);
 
+  useEffect(() => {
+    const theLoai = searchParams.get("theLoai") || undefined;
+    const quocGia = searchParams.get("quocGia") || undefined;
+    const year = searchParams.get("year") || undefined;
+    const danhMuc = searchParams.get("danhMuc") || undefined;
+    setFilters({ theLoai, quocGia, year, danhMuc });
+  }, [searchParams]);
+
   const handleFilterChange = (newFilters: { theLoai?: string; quocGia?: string; year?: string; danhMuc?: string }) => {
-    setFilters(newFilters);
+    const params = new URLSearchParams();
+    if (newFilters.theLoai) params.set("theLoai", newFilters.theLoai);
+    if (newFilters.quocGia) params.set("quocGia", newFilters.quocGia);
+    if (newFilters.year) params.set("year", newFilters.year);
+    if (newFilters.danhMuc) params.set("danhMuc", newFilters.danhMuc);
+    
+    router.push(`/filter?${params.toString()}`);
     setCurrentPage(1);
   };
 
@@ -123,7 +126,17 @@ function FilterContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <FilterPanel theLoaiList={theLoaiList} quocGiaList={quocGiaList} onFilterChange={handleFilterChange} />
+        <FilterPanel
+          theLoaiList={theLoaiList}
+          quocGiaList={quocGiaList}
+          initialFilters={{
+            theLoaiSlug: filters.theLoai,
+            quocGiaSlug: filters.quocGia,
+            year: filters.year,
+            danhMuc: filters.danhMuc
+          }}
+          onFilterChange={handleFilterChange}
+        />
       </div>
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -142,7 +155,7 @@ function FilterContent() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {movies.items.map(movie => (
-                <MovieCard key={movie._id} movie={movie} posterUrl={posterUrls[movie._id]} />
+                <MovieCard key={movie._id} movie={movie} />
               ))}
             </div>
             {Math.ceil(movies.params.pagination.totalItems / movies.params.pagination.totalItemsPerPage) > 1 && (

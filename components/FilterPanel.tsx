@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, SlidersHorizontal, ChevronUp } from "lucide-react";
 import type { Genre, Country } from "@/types/api";
 
@@ -25,6 +25,12 @@ const DANH_MUC_LIST = [
 interface FilterPanelProps {
   theLoaiList: Genre[];
   quocGiaList: Country[];
+  initialFilters?: {
+    theLoaiSlug?: string;
+    quocGiaSlug?: string;
+    year?: string;
+    danhMuc?: string;
+  };
   onFilterChange: (filters: {
     theLoai?: string;
     quocGia?: string;
@@ -33,7 +39,7 @@ interface FilterPanelProps {
   }) => void;
 }
 
-export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }: FilterPanelProps) {
+export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, onFilterChange }: FilterPanelProps) {
   const [selectedFilters, setSelectedFilters] = useState<{
     theLoaiSlug?: string;
     quocGiaSlug?: string;
@@ -41,6 +47,12 @@ export default function FilterPanel({ theLoaiList, quocGiaList, onFilterChange }
     danhMuc?: string;
   }>({});
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialFilters) {
+      setSelectedFilters(initialFilters);
+    }
+  }, [initialFilters]);
 
   const handleFilterSelect = (
     type: keyof typeof selectedFilters,
