@@ -126,7 +126,7 @@ export default function VideoPlayer({
 
     let hls: Hls | null = null;
 
-    if (Hls.isSupported() && videoUrl.endsWith(".m3u8")) {
+    if (Hls.isSupported() && (videoUrl.includes(".m3u8") || videoUrl.includes("m3u8"))) {
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -282,13 +282,11 @@ export default function VideoPlayer({
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
   };
 
-
-
   return (
     <div className="relative w-full z-10">
 
       {/* Ambient Light Canvas (Glow) */}
-      {ambientActive && !embedUrl && (
+      {ambientActive && videoUrl && (
         <canvas
           ref={canvasRef}
           width="16"
