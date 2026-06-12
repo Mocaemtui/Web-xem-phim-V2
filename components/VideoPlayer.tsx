@@ -7,10 +7,15 @@ interface VideoPlayerProps {
   poster: string;
   videoUrl?: string;
   embedUrl?: string;
+  onPlaySync?: () => void;
+  onPauseSync?: () => void;
+  onSeekSync?: (time: number) => void;
+  externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
 }
 
-export default function VideoPlayer({ poster, videoUrl, embedUrl }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, onPauseSync, onSeekSync, externalVideoRef }: VideoPlayerProps) {
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = externalVideoRef || internalVideoRef;
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -75,9 +80,11 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl }: VideoPlayerP
     if (video.paused) {
       video.play();
       setIsPlaying(true);
+      if (onPlaySync) onPlaySync();
     } else {
       video.pause();
       setIsPlaying(false);
+      if (onPauseSync) onPauseSync();
     }
   };
 
@@ -94,6 +101,7 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl }: VideoPlayerP
     const time = parseFloat(e.target.value);
     video.currentTime = time;
     setCurrentTime(time);
+    if (onSeekSync) onSeekSync(time);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,9 +148,18 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl }: VideoPlayerP
           poster={poster}
           className="w-full aspect-video"
           onTimeUpdate={handleTimeUpdate}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
+          onPlay={() => {
+            setIsPlaying(true);
+            if (onPlaySync) onPlaySync();
+          }}
+          onPause={() => {
+            setIsPlaying(false);
+            if (onPauseSync) onPauseSync();
+          }}
+          onEnded={() => {
+            setIsPlaying(false);
+            if (onPauseSync) onPauseSync();
+          }}
         />
       )}
 

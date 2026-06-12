@@ -1,0 +1,113 @@
+import { useState, useRef, useEffect } from 'react';
+import type { ChatMessage } from '@/hooks/useWatchTogether';
+
+interface RoomChatProps {
+  messages: ChatMessage[];
+  typingUsers: string[];
+  onSendMessage: (text: string) => void;
+  onTyping: (isTyping: boolean) => void;
+}
+
+export default function RoomChat({ messages, typingUsers, onSendMessage, onTyping }: RoomChatProps) {
+  const [text, setText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, typingUsers]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+    onTyping(true);
+
+    // Clear typing state after 2s of inactivity
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      onTyping(false);
+    }, 2000);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (text.trim()) {
+      onSendMessage(text);
+      setText('');
+      onTyping(false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
+      <div className="p-4 border-b border-zinc-800 bg-zinc-950/50">
+        <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <p className="text-zinc-500 text-sm text-center mt-4">Chưa có tin nhắn nào. Hãy gửi lời chào!</p>
+        ) : (
+          messages.map((msg) => {
+            if (msg.isSystem) {
+              return (
+                <div key={msg.id} className="flex justify-center my-2">
+                  <span className="text-xs text-zinc-500 italic bg-zinc-800/50 px-3 py-1 rounded-full">
+                    {msg.text}
+                  </span>
+                </div>
+              );
+            }
+
+            return (
+              <div key={msg.id} className="flex flex-col">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-medium text-sm text-blue-400">{msg.sender}</span>
+                  <span className="text-xs text-zinc-600">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <p className="text-zinc-300 text-sm mt-1 bg-zinc-800/50 w-fit py-1.5 px-3 rounded-lg rounded-tl-none break-words max-w-[90%]">
+                  {msg.text}
+                </p>
+              </div>
+            );
+          })
+        )}
+        
+        {/* Typing Indicator */}
+        {typingUsers.length > 0 && (
+          <div className="flex items-center gap-2 text-zinc-500 text-sm italic">
+            <span>{typingUsers.join(', ')} đang gõ</span>
+            <div className="flex gap-1">
+              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+              <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+              <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="p-3 bg-zinc-950/50 border-t border-zinc-800">
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="text"
+            value={text}
+            onChange={handleChange}
+            placeholder="Nhập tin nhắn..."
+            className="flex-1 bg-zinc-800 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
+          />
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Gửi
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
