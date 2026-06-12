@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
 import ImageToggle from "./ImageToggle";
@@ -65,14 +64,10 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
     <div className="min-h-screen bg-zinc-950">
       {/* Backdrop */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-950">
-        <Image
+        <img
           src={backdropUrl}
           alt={movie.name}
-          fill
-          className={`object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
-          priority
-          sizes="100vw"
-          unoptimized
+          className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
@@ -88,13 +83,10 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           {/* Poster */}
           <div className="hidden md:block">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
-              <Image
+              <img
                 src={posterUrl}
                 alt={movie.name}
-                fill
-                className={`object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
-                sizes="300px"
-                unoptimized
+                className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
               />
               {tmdbPosterUrl && (
                 <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -109,13 +101,10 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
             {/* Mobile Poster */}
             <div className="md:hidden">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900">
-                <Image
+                <img
                   src={posterUrl}
                   alt={movie.name}
-                  fill
-                  className={`object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
-                  sizes="200px"
-                  unoptimized
+                  className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
                 />
                 {tmdbPosterUrl && (
                   <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
