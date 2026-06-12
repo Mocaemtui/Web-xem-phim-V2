@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
@@ -29,40 +29,55 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const tmdbBackdropBase = images?.image_sizes?.backdrop?.w1280 || "https://image.tmdb.org/t/p/w1280";
   const tmdbBackdropUrl = tmdbBackdropFile ? `${tmdbBackdropBase}${tmdbBackdropFile}` : null;
 
+  // Single-image transition states
+  const [backdropUrl, setBackdropUrl] = useState(ophimPosterUrl);
+  const [posterUrl, setPosterUrl] = useState(ophimThumbUrl);
+  const [backdropFade, setBackdropFade] = useState(true);
+  const [posterFade, setPosterFade] = useState(true);
+
+  // Sync states when source preferences change
+  useEffect(() => {
+    setBackdropUrl(useTmdbBackdrop && tmdbBackdropUrl ? tmdbBackdropUrl : ophimPosterUrl);
+  }, [useTmdbBackdrop, ophimPosterUrl, tmdbBackdropUrl]);
+
+  useEffect(() => {
+    setPosterUrl(useTmdbPoster && tmdbPosterUrl ? tmdbPosterUrl : ophimThumbUrl);
+  }, [useTmdbPoster, ophimThumbUrl, tmdbPosterUrl]);
+
+  // Handle transitions smoothly
+  const toggleBackdrop = () => {
+    setBackdropFade(false);
+    setTimeout(() => {
+      setUseTmdbBackdrop(prev => !prev);
+      setBackdropFade(true);
+    }, 250);
+  };
+
+  const togglePoster = () => {
+    setPosterFade(false);
+    setTimeout(() => {
+      setUseTmdbPoster(prev => !prev);
+      setPosterFade(true);
+    }, 250);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Backdrop with cross-fade transition */}
+      {/* Backdrop */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-950">
-        {/* Ophim Backdrop */}
-        <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbBackdrop ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
-          <Image
-            src={ophimPosterUrl}
-            alt={movie.name}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-            unoptimized
-          />
-        </div>
-        {/* TMDB Backdrop */}
-        {tmdbBackdropUrl && (
-          <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbBackdrop ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
-            <Image
-              src={tmdbBackdropUrl}
-              alt={movie.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-              unoptimized
-            />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none z-20" />
+        <Image
+          src={backdropUrl}
+          alt={movie.name}
+          fill
+          className={`object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
+          priority
+          sizes="100vw"
+          unoptimized
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
           <div className="absolute top-4 right-4 z-30">
-            <ImageToggle onToggle={() => setUseTmdbBackdrop(prev => !prev)} label="Đổi ảnh nền (Ophim / TMDB)" />
+            <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
           </div>
         )}
       </div>
@@ -73,33 +88,17 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           {/* Poster */}
           <div className="hidden md:block">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
-              {/* Ophim Poster */}
-              <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
-                <Image
-                  src={ophimThumbUrl}
-                  alt={movie.name}
-                  fill
-                  className="object-cover"
-                  sizes="300px"
-                  unoptimized
-                />
-              </div>
-              {/* TMDB Poster */}
-              {tmdbPosterUrl && (
-                <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
-                  <Image
-                    src={tmdbPosterUrl}
-                    alt={movie.name}
-                    fill
-                    className="object-cover"
-                    sizes="300px"
-                    unoptimized
-                  />
-                </div>
-              )}
+              <Image
+                src={posterUrl}
+                alt={movie.name}
+                fill
+                className={`object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
+                sizes="300px"
+                unoptimized
+              />
               {tmdbPosterUrl && (
                 <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi ảnh poster (Ophim / TMDB)" />
+                  <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
                 </div>
               )}
             </div>
@@ -110,33 +109,17 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
             {/* Mobile Poster */}
             <div className="md:hidden">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900">
-                {/* Ophim Mobile Poster */}
-                <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
-                  <Image
-                    src={ophimThumbUrl}
-                    alt={movie.name}
-                    fill
-                    className="object-cover"
-                    sizes="200px"
-                    unoptimized
-                  />
-                </div>
-                {/* TMDB Mobile Poster */}
-                {tmdbPosterUrl && (
-                  <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
-                    <Image
-                      src={tmdbPosterUrl}
-                      alt={movie.name}
-                      fill
-                      className="object-cover"
-                      sizes="200px"
-                      unoptimized
-                    />
-                  </div>
-                )}
+                <Image
+                  src={posterUrl}
+                  alt={movie.name}
+                  fill
+                  className={`object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
+                  sizes="200px"
+                  unoptimized
+                />
                 {tmdbPosterUrl && (
                   <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi ảnh poster (Ophim / TMDB)" />
+                    <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
                   </div>
                 )}
               </div>
