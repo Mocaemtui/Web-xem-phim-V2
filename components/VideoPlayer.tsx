@@ -277,14 +277,33 @@ export default function VideoPlayer({
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
   };
 
+  // Listen for ESC key to exit Cinema Mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isCinemaMode) {
+        setIsCinemaMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCinemaMode]);
+
   return (
-    <div className={`relative w-full ${isCinemaMode ? "z-[45]" : "z-10"}`}>
-      {/* Cinema Backdrop */}
+    <div className={isCinemaMode 
+      ? "fixed inset-0 z-[9999] bg-black/98 flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300" 
+      : "relative w-full z-10"
+    }>
+      {/* Close button for Cinema Mode */}
       {isCinemaMode && (
-        <div 
+        <button
           onClick={() => setIsCinemaMode(false)}
-          className="fixed inset-0 bg-black/95 z-[40] cursor-pointer transition-opacity duration-300"
-        />
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition-colors z-[100] cursor-pointer"
+          title="Thoát rạp chiếu phim (Esc)"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       )}
 
       {/* Ambient Light Canvas (Glow) */}
@@ -300,7 +319,10 @@ export default function VideoPlayer({
 
       {/* Player Container */}
       <div 
-        className="relative w-full bg-black rounded-lg overflow-hidden group z-10"
+        className={isCinemaMode
+          ? "relative w-full max-w-5xl bg-black rounded-lg overflow-hidden group z-10 shadow-2xl border border-zinc-800/50"
+          : "relative w-full bg-black rounded-lg overflow-hidden group z-10"
+        }
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {

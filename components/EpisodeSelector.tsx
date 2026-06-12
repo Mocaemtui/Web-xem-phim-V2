@@ -30,15 +30,18 @@ export default function EpisodeSelector({
   onSelectEpisode,
   onSelectServer 
 }: EpisodeSelectorProps) {
-  if (!episodes || episodes.length === 0) {
+  const serverData = episodes[currentServerIndex]?.server_data || [];
+
+  // Hide the entire component if there is only 1 server and 1 episode (e.g. typical phim lẻ with single source)
+  if (episodes.length <= 1 && serverData.length <= 1) {
     return null;
   }
 
-  const serverData = episodes[currentServerIndex]?.server_data || [];
-
   return (
     <div className="mb-8 relative z-20">
-      <h3 className="text-lg font-semibold text-white mb-4">Danh sách tập</h3>
+      <h3 className="text-lg font-semibold text-white mb-4">
+        {serverData.length <= 1 ? "Server nguồn" : "Danh sách tập"}
+      </h3>
       
       {/* Server Selection */}
       {episodes.length > 1 && (
@@ -62,23 +65,25 @@ export default function EpisodeSelector({
         </div>
       )}
 
-      {/* Episode Selection */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {serverData.map((episode, index) => (
-          <button
-            key={`${episode.slug}-${index}`}
-            type="button"
-            onClick={() => onSelectEpisode(index)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-              currentEpisodeIndex === index
-                ? "bg-blue-600 text-white"
-                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-            }`}
-          >
-            {episode.name}
-          </button>
-        ))}
-      </div>
+      {/* Episode Selection - Only show if there are multiple episodes */}
+      {serverData.length > 1 && (
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+          {serverData.map((episode, index) => (
+            <button
+              key={`${episode.slug}-${index}`}
+              type="button"
+              onClick={() => onSelectEpisode(index)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                currentEpisodeIndex === index
+                  ? "bg-blue-600 text-white"
+                  : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+              }`}
+            >
+              {episode.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

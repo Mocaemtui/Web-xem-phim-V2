@@ -57,7 +57,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
       <div className="container mx-auto px-4 py-8">
         {/* Video Player */}
         <div className="mb-8 relative z-10">
@@ -67,6 +67,12 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
               poster={posterUrl}
               videoUrl={currentEpisode.link_m3u8}
               embedUrl={currentEpisode.link_embed}
+              hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
+              onAutoNext={() => {
+                if (currentEpisodeIndex < serverData.length - 1) {
+                  setCurrentEpisodeIndex((prev) => prev + 1);
+                }
+              }}
             />
           ) : (
             <div className="relative w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">

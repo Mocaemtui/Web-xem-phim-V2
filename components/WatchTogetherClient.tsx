@@ -187,8 +187,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col md:flex-row">
-      <div className="flex-1 p-4 overflow-y-auto">
+    <div className="min-h-screen bg-zinc-950 flex flex-col md:flex-row overflow-x-hidden">
+      <div className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <h1 className="text-xl md:text-2xl font-bold text-white">
             {movie.name} - Tập {currentEpisodeIndex + 1}
