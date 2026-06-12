@@ -25,6 +25,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
+  const currentServerIndexRef = useRef(currentServerIndex);
+  const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
+
+  useEffect(() => {
+    currentServerIndexRef.current = currentServerIndex;
+    currentEpisodeIndexRef.current = currentEpisodeIndex;
+  }, [currentServerIndex, currentEpisodeIndex]);
   
   // Mọi người đều là Host
   const {
@@ -78,15 +85,24 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       }
     };
 
-    // Khi ai đó xin đồng bộ, mình trả lời bằng thời gian hiện tại của mình
+    // Khi ai đó xin đồng bộ, mình trả lời bằng thời gian hiện tại và tập phim hiện tại của mình
     onRequestSyncRef.current = () => {
       if (videoRef.current) {
-        triggerSyncResponse(videoRef.current.currentTime, !videoRef.current.paused);
+        triggerSyncResponse(
+          videoRef.current.currentTime,
+          !videoRef.current.paused,
+          currentServerIndexRef.current,
+          currentEpisodeIndexRef.current
+        );
       }
     };
 
     // Khi nhận được phản hồi đồng bộ từ người khác
     onSyncResponseRef.current = (data) => {
+      if (data.serverIndex !== undefined && data.episodeIndex !== undefined) {
+        setCurrentServerIndex(data.serverIndex);
+        setCurrentEpisodeIndex(data.episodeIndex);
+      }
       if (videoRef.current) {
         isReceivingEvent.current = true;
         videoRef.current.currentTime = data.time;
