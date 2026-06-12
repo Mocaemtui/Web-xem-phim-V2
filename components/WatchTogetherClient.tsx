@@ -179,14 +179,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </h1>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSyncClick}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              title="Đồng bộ lại video với những người khác"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Đồng bộ Video
-            </button>
-            <button
               onClick={copyLink}
               className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm transition-colors border border-zinc-700"
             >
@@ -221,22 +213,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </div>
           )}
         </div>
-
-        {/* Reaction Bar */}
-        {isJoined && (
-          <div className="flex flex-wrap items-center gap-2 mb-6 bg-zinc-900/50 p-3 rounded-lg border border-zinc-800 w-fit">
-            <span className="text-zinc-400 text-sm flex items-center gap-1 mr-2"><Smile className="w-4 h-4"/> Bày tỏ:</span>
-            {EMOJIS.map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => triggerReaction(emoji)}
-                className="text-2xl hover:scale-125 transition-transform duration-200"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
 
         {episodes.length > 0 && serverData.length > 0 && (
           <EpisodeSelector
@@ -273,6 +249,23 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             ))}
           </div>
         </div>
+
+        {/* Reaction Bar */}
+        {isJoined && (
+          <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/20">
+            <div className="flex flex-wrap items-center gap-2 justify-center py-2 bg-zinc-900/40 rounded-lg border border-zinc-800/60">
+              {EMOJIS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => triggerReaction(emoji)}
+                  className="text-xl hover:scale-125 active:scale-95 transition-transform duration-150 cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-hidden p-4">
           <RoomChat 
