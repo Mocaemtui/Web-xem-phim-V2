@@ -73,12 +73,53 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
     };
   }, [videoUrl, embedUrl]);
 
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetControlsTimer = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onPlayStateChange = () => {
+      setIsPlaying(!video.paused);
+      if (video.paused) {
+        setShowControls(true);
+        if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      } else {
+        resetControlsTimer();
+      }
+    };
+
+    video.addEventListener("play", onPlayStateChange);
+    video.addEventListener("pause", onPlayStateChange);
+
+    return () => {
+      video.removeEventListener("play", onPlayStateChange);
+      video.removeEventListener("pause", onPlayStateChange);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [videoRef]);
+
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
 
     if (video.paused) {
-      video.play();
+      video.play().catch(() => {});
       setIsPlaying(true);
       if (onPlaySync) onPlaySync();
     } else {
@@ -102,6 +143,7 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
     video.currentTime = time;
     setCurrentTime(time);
     if (onSeekSync) onSeekSync(time);
+    resetControlsTimer();
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +152,7 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
     const vol = parseFloat(e.target.value);
     video.volume = vol;
     setVolume(vol);
+    resetControlsTimer();
   };
 
   const toggleFullscreen = () => {
@@ -117,10 +160,10 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
     if (!video) return;
 
     if (!isFullscreen) {
-      video.requestFullscreen();
+      video.requestFullscreen().catch(() => {});
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(() => {});
       setIsFullscreen(false);
     }
   };
@@ -132,7 +175,15 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
   };
 
   return (
-    <div className="relative w-full bg-black rounded-lg overflow-hidden">
+    <div 
+      className="relative w-full bg-black rounded-lg overflow-hidden group"
+      onMouseMove={resetControlsTimer}
+      onMouseLeave={() => {
+        if (videoRef.current && !videoRef.current.paused) {
+          setShowControls(false);
+        }
+      }}
+    >
       {embedUrl && (
         <iframe
           src={embedUrl}
@@ -165,7 +216,7 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
 
       {/* Custom Controls - only show for video element */}
       {!embedUrl && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
+        <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         {/* Progress Bar */}
         <div className="mb-3">
           <input
@@ -236,3 +287,4 @@ export default function VideoPlayer({ poster, videoUrl, embedUrl, onPlaySync, on
     </div>
   );
 }
+

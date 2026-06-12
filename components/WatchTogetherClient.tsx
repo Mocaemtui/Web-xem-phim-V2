@@ -248,7 +248,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         )}
       </div>
 
-      <div className="w-full md:w-80 lg:w-96 border-l border-zinc-800 bg-zinc-950 flex flex-col h-screen">
+      <div className="w-full md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-950 flex flex-col h-[500px] md:h-screen">
         <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

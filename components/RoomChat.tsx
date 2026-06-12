@@ -10,12 +10,14 @@ interface RoomChatProps {
 
 export default function RoomChat({ messages, typingUsers, onSendMessage, onTyping }: RoomChatProps) {
   const [text, setText] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto scroll to bottom
+  // Auto scroll to bottom of chat container only, avoiding scrolling the whole webpage
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages, typingUsers]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +47,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
         {messages.length === 0 ? (
           <p className="text-zinc-500 text-sm text-center mt-4">Chưa có tin nhắn nào. Hãy gửi lời chào!</p>
         ) : (
@@ -87,7 +89,6 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="p-3 bg-zinc-950/50 border-t border-zinc-800">
