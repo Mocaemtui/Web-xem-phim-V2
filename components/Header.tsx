@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Menu, X, Filter, Clock } from "lucide-react";
@@ -10,45 +10,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [pinnedCategories, setPinnedCategories] = useState<{ slug: string; name: string }[]>([]);
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Mocaemtui";
-
-  useEffect(() => {
-    const loadPinned = () => {
-      const stored = localStorage.getItem("pinned_categories");
-      if (stored) {
-        try {
-          setPinnedCategories(JSON.parse(stored));
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        setPinnedCategories([]);
-      }
-    };
-    loadPinned();
-    window.addEventListener("pinned_categories_changed", loadPinned);
-    window.addEventListener("storage", loadPinned);
-    return () => {
-      window.removeEventListener("pinned_categories_changed", loadPinned);
-      window.removeEventListener("storage", loadPinned);
-    };
-  }, []);
-
-  const removePin = (slug: string) => {
-    const stored = localStorage.getItem("pinned_categories");
-    if (stored) {
-      try {
-        const current = JSON.parse(stored) as { slug: string; name: string }[];
-        const filtered = current.filter(p => p.slug !== slug);
-        localStorage.setItem("pinned_categories", JSON.stringify(filtered));
-        setPinnedCategories(filtered);
-        window.dispatchEvent(new Event("pinned_categories_changed"));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  };
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -57,7 +19,9 @@ export default function Header() {
       setSearchOpen(false);
       setSearchKeyword("");
     }
-  };  return (
+  };
+
+  return (
     <header className="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -80,33 +44,6 @@ export default function Header() {
               <Clock size={16} />
               Lịch sử
             </Link>
-            {pinnedCategories.length > 0 && (
-              <div className="flex items-center gap-2 border-l border-zinc-800 pl-4 ml-2">
-                <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Đã ghim:</span>
-                <div className="flex items-center gap-2 max-w-[300px] overflow-x-auto no-scrollbar">
-                  {pinnedCategories.map((cat) => (
-                    <div
-                      key={cat.slug}
-                      className="flex items-center bg-zinc-900 hover:bg-zinc-800 text-yellow-500 border border-zinc-800/80 rounded-full pr-1.5 pl-2 py-0.5 transition-colors gap-1 text-xs whitespace-nowrap font-medium"
-                    >
-                      <Link href={`/filter?theLoai=${cat.slug}`} className="hover:text-yellow-400">
-                        📌 {cat.name}
-                      </Link>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          removePin(cat.slug);
-                        }}
-                        className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-zinc-700 text-zinc-500 hover:text-red-400 transition-colors ml-0.5 text-[10px]"
-                        title="Xóa ghim"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </nav>
 
           {/* Search & Mobile Menu */}
@@ -157,33 +94,6 @@ export default function Header() {
                 <Clock size={16} />
                 Lịch sử
               </Link>
-              {pinnedCategories.length > 0 && (
-                <div className="flex flex-col gap-2 border-t border-zinc-800/60 pt-3 mt-1">
-                  <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Danh mục đã ghim:</span>
-                  <div className="flex flex-wrap gap-2">
-                    {pinnedCategories.map((cat) => (
-                      <div
-                        key={cat.slug}
-                        className="flex items-center bg-zinc-900 hover:bg-zinc-800 text-yellow-500 border border-zinc-800/80 rounded-full pr-2 pl-3 py-1 transition-colors gap-1.5 text-xs font-medium"
-                      >
-                        <Link href={`/filter?theLoai=${cat.slug}`} className="hover:text-yellow-400">
-                          📌 {cat.name}
-                        </Link>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            removePin(cat.slug);
-                          }}
-                          className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-zinc-700 text-zinc-500 hover:text-red-400 transition-colors ml-1 text-[11px]"
-                          title="Xóa ghim"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </nav>
         )}

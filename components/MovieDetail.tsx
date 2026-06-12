@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
@@ -15,42 +15,6 @@ interface MovieDetailProps {
 export default function MovieDetail({ movie, images, peoples }: MovieDetailProps) {
   const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
   const [useTmdbPoster, setUseTmdbPoster] = useState(false);
-  const [pinnedCategories, setPinnedCategories] = useState<string[]>([]);
-
-  // Load pinned categories
-  useEffect(() => {
-    const stored = localStorage.getItem("pinned_categories");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { slug: string; name: string }[];
-        setPinnedCategories(parsed.map(p => p.slug));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
-
-  const togglePinCategory = (slug: string, name: string) => {
-    const stored = localStorage.getItem("pinned_categories");
-    let current: { slug: string; name: string }[] = [];
-    if (stored) {
-      try {
-        current = JSON.parse(stored);
-      } catch (e) {}
-    }
-
-    const index = current.findIndex(p => p.slug === slug);
-    if (index > -1) {
-      current.splice(index, 1);
-    } else {
-      current.push({ slug, name });
-    }
-
-    localStorage.setItem("pinned_categories", JSON.stringify(current));
-    setPinnedCategories(current.map(p => p.slug));
-    
-    window.dispatchEvent(new Event("pinned_categories_changed"));
-  };
 
   // Calculate ophim poster URL
   const ophimPosterUrl = movie.poster_url.startsWith('http') ? movie.poster_url : `https://img.ophim.live/uploads/movies/${movie.poster_url}`;
@@ -67,38 +31,38 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Backdrop */}
-      <div className="relative w-full aspect-video group/backdrop bg-zinc-950">
+      {/* Backdrop with cross-fade transition */}
+      <div className="relative w-full aspect-video overflow-hidden bg-zinc-950">
         {/* Ophim Backdrop */}
-        <Image
-          src={ophimPosterUrl}
-          alt={movie.name}
-          fill
-          className={`object-cover transition-opacity duration-700 ease-in-out ${
-            useTmdbBackdrop && tmdbBackdropUrl ? "opacity-0" : "opacity-100"
-          }`}
-          priority
-          sizes="100vw"
-          unoptimized
-        />
-        {/* TMDB Backdrop */}
-        {tmdbBackdropUrl && (
+        <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbBackdrop ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
           <Image
-            src={tmdbBackdropUrl}
+            src={ophimPosterUrl}
             alt={movie.name}
             fill
-            className={`object-cover absolute inset-0 transition-opacity duration-700 ease-in-out ${
-              useTmdbBackdrop ? "opacity-100" : "opacity-0"
-            }`}
+            className="object-cover"
             priority
             sizes="100vw"
             unoptimized
           />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
+        </div>
+        {/* TMDB Backdrop */}
         {tmdbBackdropUrl && (
-          <div className="absolute top-4 right-4 z-30 opacity-0 group-hover/backdrop:opacity-100 transition-opacity duration-300">
-            <ImageToggle onToggle={() => setUseTmdbBackdrop(prev => !prev)} label="Đổi nguồn ảnh nền" />
+          <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbBackdrop ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
+            <Image
+              src={tmdbBackdropUrl}
+              alt={movie.name}
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+              unoptimized
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none z-20" />
+        {tmdbBackdropUrl && (
+          <div className="absolute top-4 right-4 z-30">
+            <ImageToggle onToggle={() => setUseTmdbBackdrop(prev => !prev)} label="Đổi ảnh nền (Ophim / TMDB)" />
           </div>
         )}
       </div>
@@ -108,34 +72,34 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
         <div className="grid md:grid-cols-[300px_1fr] gap-8">
           {/* Poster */}
           <div className="hidden md:block">
-            <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group/poster bg-zinc-900">
+            <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
               {/* Ophim Poster */}
-              <Image
-                src={ophimThumbUrl}
-                alt={movie.name}
-                fill
-                className={`object-cover transition-opacity duration-700 ease-in-out ${
-                  useTmdbPoster && tmdbPosterUrl ? "opacity-0" : "opacity-100"
-                }`}
-                sizes="300px"
-                unoptimized
-              />
-              {/* TMDB Poster */}
-              {tmdbPosterUrl && (
+              <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
                 <Image
-                  src={tmdbPosterUrl}
+                  src={ophimThumbUrl}
                   alt={movie.name}
                   fill
-                  className={`object-cover absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                    useTmdbPoster ? "opacity-100" : "opacity-0"
-                  }`}
+                  className="object-cover"
                   sizes="300px"
                   unoptimized
                 />
+              </div>
+              {/* TMDB Poster */}
+              {tmdbPosterUrl && (
+                <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
+                  <Image
+                    src={tmdbPosterUrl}
+                    alt={movie.name}
+                    fill
+                    className="object-cover"
+                    sizes="300px"
+                    unoptimized
+                  />
+                </div>
               )}
               {tmdbPosterUrl && (
-                <div className="absolute top-3 right-3 z-30 opacity-0 group-hover/poster:opacity-100 transition-opacity duration-300">
-                  <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi nguồn ảnh dọc" />
+                <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi ảnh poster (Ophim / TMDB)" />
                 </div>
               )}
             </div>
@@ -145,34 +109,34 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           <div className="flex flex-col gap-6">
             {/* Mobile Poster */}
             <div className="md:hidden">
-              <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group/poster bg-zinc-900">
-                {/* Ophim Poster */}
-                <Image
-                  src={ophimThumbUrl}
-                  alt={movie.name}
-                  fill
-                  className={`object-cover transition-opacity duration-700 ease-in-out ${
-                    useTmdbPoster && tmdbPosterUrl ? "opacity-0" : "opacity-100"
-                  }`}
-                  sizes="200px"
-                  unoptimized
-                />
-                {/* TMDB Poster */}
-                {tmdbPosterUrl && (
+              <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900">
+                {/* Ophim Mobile Poster */}
+                <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-0 pointer-events-none" : "opacity-100 z-10"}`}>
                   <Image
-                    src={tmdbPosterUrl}
+                    src={ophimThumbUrl}
                     alt={movie.name}
                     fill
-                    className={`object-cover absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                      useTmdbPoster ? "opacity-100" : "opacity-0"
-                    }`}
+                    className="object-cover"
                     sizes="200px"
                     unoptimized
                   />
+                </div>
+                {/* TMDB Mobile Poster */}
+                {tmdbPosterUrl && (
+                  <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${useTmdbPoster ? "opacity-100 z-10" : "opacity-0 pointer-events-none"}`}>
+                    <Image
+                      src={tmdbPosterUrl}
+                      alt={movie.name}
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                      unoptimized
+                    />
+                  </div>
                 )}
                 {tmdbPosterUrl && (
-                  <div className="absolute top-2 right-2 z-30 opacity-0 group-hover/poster:opacity-100 transition-opacity duration-300">
-                    <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi nguồn ảnh dọc" />
+                  <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ImageToggle onToggle={() => setUseTmdbPoster(prev => !prev)} label="Đổi ảnh poster (Ophim / TMDB)" />
                   </div>
                 )}
               </div>
@@ -214,31 +178,19 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
             {movie.category && movie.category.length > 0 && (
               <div className="flex flex-wrap gap-2 items-center">
                 <span className="text-zinc-400 font-medium text-sm">Thể loại:</span>
-                {movie.category.map((cat) => {
-                  const isPinned = pinnedCategories.includes(cat.slug);
-                  return (
-                    <div
-                      key={cat.id}
-                      className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-full pl-3 pr-2 py-1 text-sm transition-colors text-zinc-300"
+                {movie.category.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-full px-3 py-1 text-sm transition-colors text-zinc-300"
+                  >
+                    <Link
+                      href={`/filter?theLoai=${cat.slug}`}
+                      className="text-blue-400 hover:text-blue-300 hover:underline"
                     >
-                      <Link
-                        href={`/filter?theLoai=${cat.slug}`}
-                        className="text-blue-400 hover:text-blue-300 hover:underline"
-                      >
-                        {cat.name}
-                      </Link>
-                      <button
-                        onClick={() => togglePinCategory(cat.slug, cat.name)}
-                        className={`p-0.5 rounded-full hover:bg-zinc-700 transition-colors flex items-center justify-center text-xs ${
-                          isPinned ? "text-yellow-500 scale-110" : "text-zinc-500 opacity-60 hover:opacity-100"
-                        }`}
-                        title={isPinned ? "Bỏ ghim" : "Ghim danh mục"}
-                      >
-                        📌
-                      </button>
-                    </div>
-                  );
-                })}
+                      {cat.name}
+                    </Link>
+                  </div>
+                ))}
               </div>
             )}
 
