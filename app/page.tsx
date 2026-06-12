@@ -41,16 +41,18 @@ export default async function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 overflow-hidden">
       {/* 1. Lịch Sử Section (Client-side) */}
       <HomeHistorySection />
 
       {/* 2. Anime Section */}
       <section className="mb-12">
         <SectionTitle title="Anime" viewAllLink="/anime" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {animeData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {animeData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -58,9 +60,11 @@ export default async function Home() {
       {/* 3. Cartoon Section */}
       <section className="mb-12">
         <SectionTitle title="Cartoon" viewAllLink="/cartoon" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {cartoonData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {cartoonData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -68,9 +72,11 @@ export default async function Home() {
       {/* 4. Phim Mới Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Mới" viewAllLink="/phim-moi" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimMoiData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimMoiData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -78,9 +84,11 @@ export default async function Home() {
       {/* 5. Phim Việt Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Việt" viewAllLink="/phim-viet" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimVietData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimVietData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -88,9 +96,11 @@ export default async function Home() {
       {/* 6. Phim Âu Mỹ Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Âu Mỹ" viewAllLink="/phim-au-my" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimAuMyData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimAuMyData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -98,9 +108,11 @@ export default async function Home() {
       {/* 7. Phim Nhật Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Nhật" viewAllLink="/phim-nhat" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimNhatData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimNhatData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -108,9 +120,11 @@ export default async function Home() {
       {/* 8. Phim Hàn Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Hàn" viewAllLink="/phim-han" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimHanData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimHanData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -118,9 +132,11 @@ export default async function Home() {
       {/* 9. Phim Trung Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Trung" viewAllLink="/phim-trung" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {phimTrungData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {phimTrungData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -128,9 +144,11 @@ export default async function Home() {
       {/* 10. Phim Thuyết Minh Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Thuyết Minh" viewAllLink="/phim-thuyet-minh" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {thuyetMinhData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {thuyetMinhData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
@@ -138,9 +156,11 @@ export default async function Home() {
       {/* 11. Phim Lồng Tiếng Section */}
       <section className="mb-12">
         <SectionTitle title="Phim Lồng Tiếng" viewAllLink="/phim-long-tieng" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {longTiengData?.data?.items?.map((movie) => (
-            <MovieCardWrapper key={movie._id} movie={movie} />
+        <div className="flex overflow-x-auto no-scrollbar gap-4 pb-4 scroll-smooth snap-x">
+          {longTiengData?.data?.items?.slice(0, 10).map((movie) => (
+            <div key={movie._id} className="w-[140px] sm:w-[160px] md:w-[180px] shrink-0 snap-start">
+              <MovieCardWrapper movie={movie} />
+            </div>
           )) || []}
         </div>
       </section>
