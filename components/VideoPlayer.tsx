@@ -37,7 +37,6 @@ export default function VideoPlayer({
 
   // New Features States
   const [ambientActive, setAmbientActive] = useState(true);
-  const [isCinemaMode, setIsCinemaMode] = useState(false);
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
@@ -258,10 +257,16 @@ export default function VideoPlayer({
     if (!video) return;
 
     if (!isFullscreen) {
-      video.requestFullscreen().catch(() => {});
+      if (video.requestFullscreen) {
+        video.requestFullscreen().catch(() => {});
+      } else if ((video as any).webkitEnterFullscreen) {
+        (video as any).webkitEnterFullscreen();
+      }
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
       setIsFullscreen(false);
     }
   };
@@ -277,34 +282,10 @@ export default function VideoPlayer({
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
   };
 
-  // Listen for ESC key to exit Cinema Mode
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isCinemaMode) {
-        setIsCinemaMode(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isCinemaMode]);
+
 
   return (
-    <div className={isCinemaMode 
-      ? "fixed inset-0 z-[9999] bg-black/98 flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300" 
-      : "relative w-full z-10"
-    }>
-      {/* Close button for Cinema Mode */}
-      {isCinemaMode && (
-        <button
-          onClick={() => setIsCinemaMode(false)}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition-colors z-[100] cursor-pointer"
-          title="Thoát rạp chiếu phim (Esc)"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
+    <div className="relative w-full z-10">
 
       {/* Ambient Light Canvas (Glow) */}
       {ambientActive && !embedUrl && (
@@ -319,10 +300,7 @@ export default function VideoPlayer({
 
       {/* Player Container */}
       <div 
-        className={isCinemaMode
-          ? "relative w-full max-w-5xl bg-black rounded-lg overflow-hidden group z-10 shadow-2xl border border-zinc-800/50"
-          : "relative w-full bg-black rounded-lg overflow-hidden group z-10"
-        }
+        className="relative w-full bg-black rounded-lg overflow-hidden group z-10"
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
@@ -330,16 +308,7 @@ export default function VideoPlayer({
           }
         }}
       >
-        {embedUrl && (
-          <iframe
-            src={embedUrl}
-            className="w-full aspect-video"
-            allowFullScreen
-            allow="autoplay; encrypted-media"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
-          />
-        )}
-        {!embedUrl && (
+        {videoUrl ? (
           <video
             ref={videoRef}
             poster={poster}
@@ -359,6 +328,18 @@ export default function VideoPlayer({
               if (onPauseSync) onPauseSync();
             }}
           />
+        ) : embedUrl ? (
+          <iframe
+            src={embedUrl}
+            className="w-full aspect-video"
+            allowFullScreen
+            allow="autoplay; encrypted-media"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+          />
+        ) : (
+          <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+            <p className="text-zinc-400">Không tìm thấy link phim</p>
+          </div>
         )}
 
         {/* Auto-Next Countdown overlay */}
@@ -387,7 +368,7 @@ export default function VideoPlayer({
         )}
 
         {/* Custom Controls - only show for video element */}
-        {!embedUrl && (
+        {videoUrl && (
           <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 z-20 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
             {/* Progress Bar */}
             <div className="mb-3">
@@ -451,22 +432,7 @@ export default function VideoPlayer({
                   </svg>
                 </button>
 
-                {/* Cinema Mode button */}
-                <button
-                  onClick={() => setIsCinemaMode(!isCinemaMode)}
-                  className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${isCinemaMode ? "text-yellow-400" : "text-zinc-300"}`}
-                  title="Chế độ rạp chiếu phim"
-                >
-                  {isCinemaMode ? (
-                    <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75zM6.162 5.102a.75.75 0 0 1 1.06 0l1.59 1.59a.75.75 0 1 1-1.06 1.06l-1.59-1.59a.75.75 0 0 1 0-1.06zm11.676 0a.75.75 0 0 1 0 1.06l-1.59 1.59a.75.75 0 1 1-1.06-1.06l1.59-1.59a.75.75 0 0 1 1.06 0zM12 6a6 6 0 1 0 6 6 6.007 6.007 0 0 0-6-6zm0 10.5a4.5 4.5 0 1 1 4.5-4.5 4.505 4.505 0 0 1-4.5 4.5zM3 12a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm15 0a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5h-2.25A.75.75 0 0 1 18 12zM6.162 18.898a.75.75 0 0 1 0-1.06l1.59-1.59a.75.75 0 1 1 1.06 1.06l-1.59 1.59a.75.75 0 0 1-1.06 0zm11.676 0a.75.75 0 0 1-1.06 0l-1.59-1.59a.75.75 0 1 1 1.06-1.06l1.59 1.59a.75.75 0 0 1 0 1.06zM12 18.75a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-1.5a.75.75 0 0 1 .75-.75z"/>
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 3a9 9 0 1 0 9 9h-9V3z" />
-                    </svg>
-                  )}
-                </button>
+
 
                 {/* Fullscreen button */}
                 <button
