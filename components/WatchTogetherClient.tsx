@@ -221,6 +221,14 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 onSeekSync={(time) => {
                   if (!isReceivingEvent.current) triggerSeek(time);
                 }}
+                hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
+                onAutoNext={() => {
+                  if (currentEpisodeIndex < serverData.length - 1) {
+                    const nextIdx = currentEpisodeIndex + 1;
+                    setCurrentEpisodeIndex(nextIdx);
+                    triggerChangeEpisode(currentServerIndex, nextIdx);
+                  }
+                }}
               />
             </>
           ) : (
