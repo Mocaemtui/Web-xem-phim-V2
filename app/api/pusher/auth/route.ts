@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
+    if (!pusherServer) {
+      console.error('Pusher is not configured. Missing environment variables.');
+      return NextResponse.json({ error: 'Pusher is not configured on the server' }, { status: 500 });
+    }
+
     const data = await req.formData();
     const socketId = data.get('socket_id') as string;
     const channelName = data.get('channel_name') as string;

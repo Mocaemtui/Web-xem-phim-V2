@@ -49,12 +49,20 @@ export const useWatchTogether = (roomId: string, username: string, initialIsHost
       },
     ]);
   };
-
   useEffect(() => {
     if (!roomId || !username) return;
 
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_KEY!, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_APP_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+    if (!pusherKey || !pusherCluster) {
+      addSystemMessage("Lỗi: Chưa cấu hình Pusher. Tính năng xem chung sẽ không hoạt động.");
+      console.warn("Pusher environment variables (NEXT_PUBLIC_PUSHER_APP_KEY or NEXT_PUBLIC_PUSHER_CLUSTER) are missing!");
+      return;
+    }
+
+    const pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
       authEndpoint: '/api/pusher/auth',
       auth: {
         params: {
