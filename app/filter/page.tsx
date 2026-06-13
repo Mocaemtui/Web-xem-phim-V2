@@ -31,7 +31,7 @@ function FilterContent() {
   const [movies, setMovies] = useState<MovieListResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<{ theLoai?: string; quocGia?: string; year?: string; danhMuc?: string }>({});
+  const [filters, setFilters] = useState<{ theLoai?: string; quocGia?: string; year?: string; loaiPhim?: string; phienBan?: string; sortField?: string }>({});
   const [title, setTitle] = useState("Bộ Lọc Phim");
   const [theLoaiList, setTheLoaiList] = useState<Genre[]>([]);
   const [quocGiaList, setQuocGiaList] = useState<Country[]>([]);
@@ -39,10 +39,8 @@ function FilterContent() {
 
   const updateTitle = useCallback(() => {
     const parts: string[] = [];
-    if (filters.danhMuc) {
-      const name = DANH_MUC_LIST.find(d => d.slug === filters.danhMuc)?.name || filters.danhMuc;
-      parts.push(name);
-    }
+    if (filters.loaiPhim) parts.push(filters.loaiPhim);
+    if (filters.phienBan) parts.push(filters.phienBan);
     if (filters.theLoai) {
       const name = theLoaiList.find(t => t.slug === filters.theLoai)?.name || filters.theLoai;
       parts.push(name);
@@ -59,20 +57,29 @@ function FilterContent() {
     setLoading(true);
     try {
       let data: MovieListResponse | null = null;
-      if (filters.danhMuc) {
-        const res = await getDanhSach(filters.danhMuc, { page, limit: 30, category: filters.theLoai, country: filters.quocGia, year: filters.year });
+      const danhMucSlug = filters.loaiPhim || filters.phienBan || "phim-moi";
+      
+      const queryParams: any = { 
+        page, 
+        limit: 30, 
+        category: filters.theLoai, 
+        country: filters.quocGia, 
+        year: filters.year,
+        sort_field: filters.sortField,
+        sort_type: filters.sortField ? "desc" : undefined
+      };
+
+      if (filters.loaiPhim || filters.phienBan) {
+        const res = await getDanhSach(danhMucSlug, queryParams);
         data = res?.data || null;
       } else if (filters.theLoai) {
-        const res = await getTheLoaiDetails(filters.theLoai, { page, limit: 30, country: filters.quocGia, year: filters.year });
+        const res = await getTheLoaiDetails(filters.theLoai, queryParams);
         data = res?.data || null;
       } else if (filters.quocGia) {
-        const res = await getQuocGiaDetails(filters.quocGia, { page, limit: 30, category: filters.theLoai, year: filters.year });
-        data = res?.data || null;
-      } else if (filters.year) {
-        const res = await getDanhSach("phim-moi", { page, limit: 30, year: filters.year });
+        const res = await getQuocGiaDetails(filters.quocGia, queryParams);
         data = res?.data || null;
       } else {
-        const res = await getDanhSach("phim-moi", { page, limit: 30 });
+        const res = await getDanhSach("phim-moi", queryParams);
         data = res?.data || null;
       }
       setMovies(data);
@@ -101,16 +108,20 @@ function FilterContent() {
     const theLoai = searchParams.get("theLoai") || undefined;
     const quocGia = searchParams.get("quocGia") || undefined;
     const year = searchParams.get("year") || undefined;
-    const danhMuc = searchParams.get("danhMuc") || undefined;
-    setFilters({ theLoai, quocGia, year, danhMuc });
+    const loaiPhim = searchParams.get("loaiPhim") || undefined;
+    const phienBan = searchParams.get("phienBan") || undefined;
+    const sortField = searchParams.get("sortField") || undefined;
+    setFilters({ theLoai, quocGia, year, loaiPhim, phienBan, sortField });
   }, [searchParams]);
 
-  const handleFilterChange = (newFilters: { theLoai?: string; quocGia?: string; year?: string; danhMuc?: string }) => {
+  const handleFilterChange = (newFilters: { theLoai?: string; quocGia?: string; year?: string; loaiPhim?: string; phienBan?: string; sortField?: string }) => {
     const params = new URLSearchParams();
     if (newFilters.theLoai) params.set("theLoai", newFilters.theLoai);
     if (newFilters.quocGia) params.set("quocGia", newFilters.quocGia);
     if (newFilters.year) params.set("year", newFilters.year);
-    if (newFilters.danhMuc) params.set("danhMuc", newFilters.danhMuc);
+    if (newFilters.loaiPhim) params.set("loaiPhim", newFilters.loaiPhim);
+    if (newFilters.phienBan) params.set("phienBan", newFilters.phienBan);
+    if (newFilters.sortField) params.set("sortField", newFilters.sortField);
     
     router.push(`/filter?${params.toString()}`);
     setCurrentPage(1);
@@ -133,7 +144,9 @@ function FilterContent() {
             theLoaiSlug: filters.theLoai,
             quocGiaSlug: filters.quocGia,
             year: filters.year,
-            danhMuc: filters.danhMuc
+            loaiPhim: filters.loaiPhim,
+            phienBan: filters.phienBan,
+            sortField: filters.sortField
           }}
           onFilterChange={handleFilterChange}
         />
