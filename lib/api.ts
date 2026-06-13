@@ -21,7 +21,9 @@ export async function fetchAPI<T>(
   customBaseUrl?: string
 ): Promise<ApiResponse<T> | null> {
   try {
-    const url = `${customBaseUrl || API_BASE_URL}${endpoint}`;
+    const baseUrl = customBaseUrl || API_BASE_URL;
+    const hasQuery = endpoint.includes('?');
+    const url = `${baseUrl}${endpoint}${hasQuery ? '&' : '?'}cb=1`;
     
     const response = await fetch(url, {
       next: { revalidate }, // Cache API theo thời gian cấu hình

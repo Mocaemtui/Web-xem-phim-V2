@@ -5,7 +5,8 @@ const NGUONC_BASE_URL = "https://phim.nguonc.com/api";
 // Helper function to fetch from NguonC
 async function fetchNguonC<T>(endpoint: string, revalidate: number = 3600): Promise<T | null> {
   try {
-    const url = `${NGUONC_BASE_URL}${endpoint}`;
+    const hasQuery = endpoint.includes('?');
+    const url = `${NGUONC_BASE_URL}${endpoint}${hasQuery ? '&' : '?'}cb=1`;
     const response = await fetch(url, {
       next: { revalidate },
       headers: {
