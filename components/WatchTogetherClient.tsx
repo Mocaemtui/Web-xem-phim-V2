@@ -96,59 +96,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const currentServerIndexRef = useRef(currentServerIndex);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
 
-  const chatHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const resetChatHideTimer = () => {
-    if (chatHideTimeoutRef.current) {
-      clearTimeout(chatHideTimeoutRef.current);
-    }
-    // Không áp dụng quy tắc 5s nếu không ở trạng thái zoom/màn hình nhỏ
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      return;
-    }
-    chatHideTimeoutRef.current = setTimeout(() => {
-      if (typeof document !== "undefined") {
-        const activeEl = document.activeElement as HTMLElement | null;
-        const isInputFocused = activeEl && (
-          activeEl.tagName === "INPUT" || 
-          activeEl.tagName === "TEXTAREA" || 
-          activeEl.isContentEditable
-        );
-        if (!isInputFocused) {
-          setIsChatHidden(true);
-        } else {
-          // Keep active if user is typing
-          resetChatHideTimer();
-        }
-      }
-    }, 5000);
-  };
-
-  useEffect(() => {
-    const handleActivity = () => {
-      if (!isChatHidden) {
-        resetChatHideTimer();
-      }
-    };
-
-    if (!isChatHidden) {
-      resetChatHideTimer();
-      window.addEventListener("mousemove", handleActivity);
-      window.addEventListener("keydown", handleActivity);
-      window.addEventListener("touchstart", handleActivity);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
-      window.removeEventListener("touchstart", handleActivity);
-      if (chatHideTimeoutRef.current) {
-        clearTimeout(chatHideTimeoutRef.current);
-      }
-    };
-  }, [isChatHidden]);
-
-
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
     isResizing.current = true;
@@ -557,14 +504,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-zinc-950 md:bg-transparent p-0 shrink min-h-0 md:mb-6 md:flex-1 flex items-center justify-center h-[56.25vw] md:h-auto md:max-h-[calc(100vh-160px)]"
         }`}>
 
-          {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden & hovered near top-right) */}
+          {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden) */}
           {isChatHidden && (
-            <div className={`absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md transition-opacity duration-300 group/overlay ${
-              unreadCount > 0 ? "opacity-100 ring-2 ring-red-500/50" : "opacity-0 hover:opacity-100 focus-within:opacity-100"
-            }`}
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/90 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md transition-opacity duration-300 shadow-xl opacity-100 animate-in fade-in"
                  style={{ contentVisibility: "auto" }}>
-              {/* Invisible hover helper to make it easy to trigger */}
-              <div className="absolute -top-4 -right-4 -bottom-4 -left-12 z-[-1] pointer-events-auto" />
               
               {/* Watchers Popover (Horizontal Context) */}
               <div className="relative">
