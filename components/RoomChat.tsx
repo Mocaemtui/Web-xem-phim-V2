@@ -6,9 +6,10 @@ interface RoomChatProps {
   typingUsers: string[];
   onSendMessage: (text: string) => void;
   onTyping: (isTyping: boolean) => void;
+  isTheaterMode?: boolean;
 }
 
-export default function RoomChat({ messages, typingUsers, onSendMessage, onTyping }: RoomChatProps) {
+export default function RoomChat({ messages, typingUsers, onSendMessage, onTyping, isTheaterMode }: RoomChatProps) {
   const [text, setText] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -37,6 +38,13 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
     }, 2000);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !text.trim()) {
+      e.preventDefault();
+      window.dispatchEvent(new Event("toggle-chat-visibility"));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim()) {
@@ -49,9 +57,9 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
 
 
   return (
-    <div className="flex flex-col h-full bg-transparent overflow-hidden border-0 shadow-none" style={{ backgroundColor: "transparent" }}>
+    <div className="flex flex-col h-full bg-transparent overflow-hidden border-0 shadow-none pointer-events-none" style={{ backgroundColor: "transparent" }}>
       
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth pointer-events-auto">
         {messages.length === 0 ? (
           <p className="text-zinc-500 text-sm text-center mt-4">Chưa có tin nhắn nào. Hãy gửi lời chào!</p>
         ) : (
@@ -98,7 +106,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         )}
       </div>
 
-      <div className="p-3 bg-zinc-950/20 backdrop-blur-sm border-t border-zinc-900/30">
+      <div className={`p-3 bg-zinc-950/20 backdrop-blur-sm border-t border-zinc-900/30 pointer-events-auto ${isTheaterMode ? "mb-24" : ""}`}>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             id="chat-input-field"
