@@ -121,7 +121,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
           <button
             type="submit"
             disabled={!text.trim()}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-white p-2.5 rounded-xl transition-all duration-200 active:scale-95 shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/10"
+            className="bg-transparent hover:bg-zinc-800/40 text-zinc-300 disabled:opacity-30 disabled:hover:bg-transparent p-2.5 rounded-xl transition-all duration-200 active:scale-95 shrink-0 flex items-center justify-center"
             title="Gửi tin nhắn"
           >
             <Send className="w-4 h-4" />

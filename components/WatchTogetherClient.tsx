@@ -780,15 +780,14 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-all duration-500 ease-in-out ${
+        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-opacity duration-300 ease-in-out ${
           isChatHidden ? "opacity-0 pointer-events-none" : "opacity-100"
         } ${isTheaterMode ? "pointer-events-none" : ""}`}
         style={{ 
-          width: isChatHidden ? "0px" : (isTheaterMode ? "260px" : `${chatWidth}px`), 
-          padding: isChatHidden ? "0px" : "12px",
-          gap: isChatHidden ? "0px" : "12px",
+          width: isTheaterMode ? "260px" : `${chatWidth}px`, 
+          padding: "12px",
+          gap: "12px",
           overflow: "hidden",
-          transitionProperty: "width, padding, gap, opacity",
           backgroundColor: "transparent" 
         }}
       >
@@ -901,27 +900,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Close the Side-by-side Video/Chat container */}
       </div>
 
-      {/* Floating Chat Restore Button */}
-      {isChatHidden && isTheaterMode && (
-        <button
-          onClick={() => {
-            setIsChatHidden(false);
-            setTimeout(() => {
-              const inputEl = document.getElementById("chat-input-field");
-              if (inputEl) inputEl.focus();
-            }, 100);
-          }}
-          className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 p-3 rounded-full shadow-2xl transition-all cursor-pointer backdrop-blur-md items-center justify-center animate-in fade-in"
-          title="Hiện cuộc trò chuyện"
-        >
-          <MessageSquare className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold rounded-full w-5 h-5 flex items-center justify-center text-[10px] border border-zinc-950 animate-pulse">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-      )}
+
 
       {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only, scroll down to see) */}
       {!isTheaterMode && (
