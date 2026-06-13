@@ -27,6 +27,22 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "episodes" | "watchers">("chat");
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [chatWidth, setChatWidth] = useState(384);
+  const [ambientActive, setAmbientActive] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ambient_active");
+      setAmbientActive(saved !== "false");
+    }
+
+    const handleAmbientChanged = () => {
+      const saved = localStorage.getItem("ambient_active");
+      setAmbientActive(saved !== "false");
+    };
+
+    window.addEventListener("ambient_active_changed", handleAmbientChanged);
+    return () => window.removeEventListener("ambient_active_changed", handleAmbientChanged);
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -266,13 +282,16 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   return (
     <div ref={containerRef} className="relative h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
       {/* Global Background Ambient Glow Canvas */}
-      <canvas
-        ref={ambientCanvasRef}
-        width="16"
-        height="9"
-        className="absolute inset-0 w-full h-full blur-[140px] opacity-45 pointer-events-none transition-all duration-700"
-        style={{ zIndex: 0 }}
-      />
+      {ambientActive && (
+        <canvas
+          ref={ambientCanvasRef}
+          width="16"
+          height="9"
+          className="absolute inset-0 w-full h-full blur-[140px] opacity-45 pointer-events-none transition-all duration-700"
+          style={{ zIndex: 0 }}
+        />
+      )}
+
 
       {isTheaterMode && (
         <style dangerouslySetInnerHTML={{__html: `
@@ -516,13 +535,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         style={{ width: `${chatWidth}px` }}
       >
         {/* Chat Area Ambient Canvas */}
-        <canvas
-          ref={chatAmbientCanvasRef}
-          width="16"
-          height="9"
-          className="absolute inset-0 w-full h-full blur-[110px] opacity-50 pointer-events-none transition-all duration-700"
-          style={{ zIndex: 0 }}
-        />
+        {ambientActive && (
+          <canvas
+            ref={chatAmbientCanvasRef}
+            width="16"
+            height="9"
+            className="absolute inset-0 w-full h-full blur-[110px] opacity-50 pointer-events-none transition-all duration-700"
+            style={{ zIndex: 0 }}
+          />
+        )}
 
         <div className="p-2.5 bg-zinc-950/10 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
           <div className="flex items-center gap-2">
@@ -541,9 +562,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Reaction Bar */}
         {isJoined && (
-          <div className="px-4 py-2 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
+          <div className="px-4 py-1.5 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
+            <div className="flex flex-wrap items-center gap-2 justify-center py-1">
 
-            <div className="flex flex-wrap items-center gap-2 justify-center py-2 bg-zinc-900/40 rounded-lg border border-zinc-800/60">
               {EMOJIS.map(emoji => (
                 <button
                   key={emoji}

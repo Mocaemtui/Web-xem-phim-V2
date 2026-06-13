@@ -38,7 +38,23 @@ export default function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // New Features States
-  const [ambientActive, setAmbientActive] = useState(true);
+  const [ambientActive, setAmbientActive] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ambient_active");
+      return saved !== "false";
+    }
+    return true;
+  });
+
+  const handleAmbientToggle = () => {
+    const nextVal = !ambientActive;
+    setAmbientActive(nextVal);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ambient_active", String(nextVal));
+      window.dispatchEvent(new Event("ambient_active_changed"));
+    }
+  };
+
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
@@ -656,10 +672,11 @@ export default function VideoPlayer({
               <div className="flex items-center gap-2">
                 {/* Ambient Light Toggle */}
                 <button
-                  onClick={() => setAmbientActive(!ambientActive)}
+                  onClick={handleAmbientToggle}
                   className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${ambientActive ? "text-blue-400" : "text-zinc-500"}`}
                   title="Bật/Tắt hiệu ứng đèn nền (Ambient Light)"
                 >
+
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364.364l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 113.536 0V21h2v-3.343" />
                   </svg>
