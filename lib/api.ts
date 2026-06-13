@@ -43,36 +43,6 @@ export async function fetchAPI<T>(
     if (data.status === 'error') {
       return null;
     }
-
-    // Tự động chuẩn hóa link ảnh từ các nguồn khác nhau (Đặc biệt là PhimAPI)
-    const imageDomain = data.data?.APP_DOMAIN_CDN_IMAGE 
-      ? (data.data.APP_DOMAIN_CDN_IMAGE.endsWith('/') ? data.data.APP_DOMAIN_CDN_IMAGE : `${data.data.APP_DOMAIN_CDN_IMAGE}/`)
-      : 'https://img.ophim.live/uploads/movies/';
-
-    const normalizeImage = (path: string) => {
-      if (!path) return '';
-      if (path.startsWith('http')) return path;
-      return `${imageDomain}${path}`.replace(/(?<!:)\/\//g, '/'); // remove double slashes but keep http://
-    };
-
-    if (data.data?.items) {
-      data.data.items = data.data.items.map((item: any) => ({
-        ...item,
-        thumb_url: normalizeImage(item.thumb_url),
-        poster_url: normalizeImage(item.poster_url),
-      }));
-    } else if (data.items) {
-      data.items = data.items.map((item: any) => ({
-        ...item,
-        thumb_url: normalizeImage(item.thumb_url),
-        poster_url: normalizeImage(item.poster_url),
-      }));
-    }
-    
-    if (data.data?.item) {
-      data.data.item.thumb_url = normalizeImage(data.data.item.thumb_url);
-      data.data.item.poster_url = normalizeImage(data.data.item.poster_url);
-    }
     
     return data;
   } catch (error) {
@@ -359,23 +329,17 @@ export async function getChiTietPhim(
 
   if (ophimRes?.data?.item) {
     baseMovie = ophimRes.data.item;
-    allEpisodes.push(...(baseMovie.episodes?.map(epServer => ({
-      server_name: epServer.server_name ? `Ophim - ${epServer.server_name}` : "Ophim",
-      server_data: epServer.server_data || []
-    })) || []));
+    allEpisodes.push(...(baseMovie.episodes?.map(e => ({ ...e, server_name: `MOCA PRO - ${e.server_name}` })) || []));
   }
   
   if (phimapiRes?.data?.item) {
     if (!baseMovie) baseMovie = phimapiRes.data.item;
-    allEpisodes.push(...(phimapiRes.data.item.episodes?.map(epServer => ({
-      server_name: epServer.server_name ? `PhimAPI - ${epServer.server_name}` : "PhimAPI",
-      server_data: epServer.server_data || []
-    })) || []));
+    allEpisodes.push(...(phimapiRes.data.item.episodes?.map(e => ({ ...e, server_name: `MOCA VIP - ${e.server_name}` })) || []));
   }
 
   if (nguoncRes) {
     if (!baseMovie) baseMovie = nguoncRes;
-    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `NguonC - ${e.server_name}` })) || []));
+    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `MOCA MAX - ${e.server_name}` })) || []));
   }
 
   if (!baseMovie) return null;

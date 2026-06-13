@@ -11,8 +11,7 @@ interface MovieDetailProps {
   peoples: MoviePeoples;
 }
 
-export default function MovieDetail({ movie: initialMovie, images, peoples }: MovieDetailProps) {
-  const [movie, setMovie] = useState<MovieDetail>(initialMovie);
+export default function MovieDetail({ movie, images, peoples }: MovieDetailProps) {
   const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
   const [useTmdbPoster, setUseTmdbPoster] = useState(false);
 
@@ -61,94 +60,19 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
     }, 250);
   };
 
-  // Lấy thêm NguonC trên Client-side để biết có MOCA MAX không
-  useEffect(() => {
-    const fetchNguonC = async () => {
-      try {
-        let res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
-        let data = res.ok ? await res.json() : null;
-
-        if (!data?.movie?.episodes) {
-          const originName = movie.origin_name || movie.name;
-          if (originName) {
-            const searchRes = await fetch(`https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(originName)}`);
-            if (searchRes.ok) {
-              const searchData = await searchRes.json();
-              const match = searchData?.items?.find((m: any) => 
-                (m.original_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
-              );
-              if (match && match.slug !== movie.slug) {
-                res = await fetch(`https://phim.nguonc.com/api/film/${match.slug}`);
-                data = res.ok ? await res.json() : null;
-              }
-            }
-          }
-        }
-        
-        if (data?.movie?.episodes) {
-          const nguonCEps = data.movie.episodes.map((epServer: any) => ({
-            server_name: `NguonC - ${epServer.server_name || "Server 1"}`,
-            server_data: epServer.items?.map((ep: any) => ({
-              name: ep.name,
-              slug: ep.slug,
-              filename: ep.name,
-              link: "",
-              link_embed: ep.embed,
-              link_m3u8: "",
-            })) || []
-          }));
-          
-          setMovie(prev => {
-            // Chỉ thêm nếu chưa có
-            const existingServers = new Set(prev.episodes?.map(e => e.server_name) || []);
-            const newEps = nguonCEps.filter((e: any) => !existingServers.has(e.server_name));
-            if (newEps.length === 0) return prev;
-            
-            return {
-              ...prev,
-              episodes: [...(prev.episodes || []), ...newEps]
-            };
-          });
-        }
-      } catch (error) {
-        console.error("Lỗi lấy thông tin MOCA MAX:", error);
-      }
-    };
-    
-    // Chỉ fetch nếu chưa có NguonC
-    if (!movie.episodes?.some(e => e.server_name.includes("NguonC"))) {
-      fetchNguonC();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movie.slug]);
-
-  // Gom nhóm các server chính
-  const getAvailableServers = () => {
-    const servers = new Set<string>();
-    movie.episodes?.forEach(ep => {
-      if (ep.server_name.includes("Ophim")) servers.add("Ophim");
-      else if (ep.server_name.includes("PhimAPI")) servers.add("PhimAPI");
-      else if (ep.server_name.includes("NguonC")) servers.add("NguonC");
-      else servers.add(ep.server_name);
-    });
-    return Array.from(servers);
-  };
-  const availableServers = getAvailableServers();
-
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Backdrop */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 group">
         <img
-          src={`/api/proxy-image?url=${encodeURIComponent(backdropUrl)}`}
+          src={backdropUrl}
           alt={movie.name}
-          onDoubleClick={tmdbBackdropUrl ? toggleBackdrop : undefined}
           className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
-          <div className="hidden md:flex absolute top-0 right-0 w-48 h-48 z-30 group/corner items-start justify-end p-4">
-            <div className="opacity-30 hover:opacity-100 pointer-events-auto transition-all duration-300">
+          <div className="absolute top-0 right-0 w-48 h-48 z-30 group/corner flex items-start justify-end p-4">
+            <div className="opacity-100 visible md:opacity-0 md:invisible md:group-hover/corner:opacity-100 md:group-hover/corner:visible pointer-events-auto md:pointer-events-none md:group-hover/corner:pointer-events-auto transition-all duration-300">
               <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
             </div>
           </div>
@@ -162,13 +86,12 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
           <div className="hidden md:block">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
               <img
-                src={`/api/proxy-image?url=${encodeURIComponent(posterUrl)}`}
+                src={posterUrl}
                 alt={movie.name}
-                onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                 className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
               />
               {tmdbPosterUrl && (
-                <div className="hidden md:block absolute top-3 right-3 z-30 opacity-30 hover:opacity-100 pointer-events-auto transition-all duration-300">
+                <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 invisible group-hover:visible pointer-events-none group-hover:pointer-events-auto transition-all duration-300">
                   <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
                 </div>
               )}
@@ -181,11 +104,15 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
             <div className="md:hidden">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900">
                 <img
-                  src={`/api/proxy-image?url=${encodeURIComponent(posterUrl)}`}
+                  src={posterUrl}
                   alt={movie.name}
-                  onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                   className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
                 />
+                {tmdbPosterUrl && (
+                  <div className="absolute top-2 right-2 z-30 opacity-100 visible md:opacity-0 md:invisible md:group-hover:opacity-100 md:group-hover:visible pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto transition-all duration-300">
+                    <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -299,30 +226,6 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
                         {person.name}
                       </span>
                     ))}
-                </div>
-              </div>
-            )}
-
-            {/* Available Servers */}
-            {availableServers.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-sm font-semibold text-zinc-400 mb-2 uppercase tracking-wider">Nguồn phát có sẵn</h3>
-                <div className="flex flex-wrap gap-2">
-                  {availableServers.map((server, index) => {
-                    let colorClass = "bg-zinc-800 text-zinc-300 border-zinc-700";
-                    if (server.includes("Ophim")) colorClass = "bg-blue-900/40 text-blue-300 border-blue-800";
-                    if (server.includes("PhimAPI")) colorClass = "bg-purple-900/40 text-purple-300 border-purple-800";
-                    if (server.includes("NguonC")) colorClass = "bg-emerald-900/40 text-emerald-300 border-emerald-800";
-                    
-                    return (
-                      <span
-                        key={index}
-                        className={`text-xs px-2.5 py-1 rounded border ${colorClass}`}
-                      >
-                        {server}
-                      </span>
-                    );
-                  })}
                 </div>
               </div>
             )}

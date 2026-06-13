@@ -83,7 +83,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
         
         if (data?.movie?.episodes) {
           const nguonCEps = data.movie.episodes.map((epServer: any) => ({
-            server_name: `NguonC - ${epServer.server_name || "Vietsub"}`,
+            server_name: `MOCA MAX - ${epServer.server_name || "Vietsub"}`,
             server_data: epServer.items?.map((ep: any) => ({
               name: ep.name,
               slug: ep.slug,
@@ -95,7 +95,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
           }));
           
           setEpisodes(prev => {
-            if (prev.some(e => e.server_name.startsWith('NguonC'))) return prev;
+            if (prev.some(e => e.server_name.startsWith('MOCA MAX'))) return prev;
             return [...prev, ...nguonCEps];
           });
         }
@@ -105,7 +105,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     };
 
     // Only fetch if NguonC hasn't already been provided by SSR
-    if (!episodes.some(e => e.server_name.startsWith('NguonC'))) {
+    if (!episodes.some(e => e.server_name.startsWith('MOCA MAX'))) {
       fetchNguonC();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

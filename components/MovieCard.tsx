@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Movie } from "@/types/api";
 
 interface MovieCardProps {
@@ -19,11 +20,12 @@ export default function MovieCard({ movie, posterUrl }: MovieCardProps) {
   return (
     <Link href={`/phim/${encodeURIComponent(movie.slug)}`} className="group">
       <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
-        <img
-          src={`/api/proxy-image?url=${encodeURIComponent(finalPosterUrl)}`}
+        <Image
+          src={finalPosterUrl}
           alt={movie.name}
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 will-change-transform"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105 will-change-transform"
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
