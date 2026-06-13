@@ -142,12 +142,13 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
         <img
           src={backdropUrl}
           alt={movie.name}
+          onDoubleClick={tmdbBackdropUrl ? toggleBackdrop : undefined}
           className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
-          <div className="absolute top-0 right-0 w-48 h-48 z-30 group/corner flex items-start justify-end p-4">
-            <div className="opacity-30 md:opacity-0 hover:opacity-100 md:invisible md:group-hover/corner:opacity-100 md:group-hover/corner:visible pointer-events-auto md:pointer-events-none md:group-hover/corner:pointer-events-auto transition-all duration-300">
+          <div className="hidden md:flex absolute top-0 right-0 w-48 h-48 z-30 group/corner items-start justify-end p-4">
+            <div className="opacity-30 hover:opacity-100 pointer-events-auto transition-all duration-300">
               <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
             </div>
           </div>
@@ -163,10 +164,11 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
               <img
                 src={posterUrl}
                 alt={movie.name}
+                onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                 className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
               />
               {tmdbPosterUrl && (
-                <div className="absolute top-3 right-3 z-30 opacity-30 hover:opacity-100 md:opacity-0 md:invisible group-hover:opacity-100 group-hover:visible pointer-events-auto md:pointer-events-none group-hover:pointer-events-auto transition-all duration-300">
+                <div className="hidden md:block absolute top-3 right-3 z-30 opacity-30 hover:opacity-100 pointer-events-auto transition-all duration-300">
                   <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
                 </div>
               )}
@@ -181,13 +183,9 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
                 <img
                   src={posterUrl}
                   alt={movie.name}
+                  onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                   className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
                 />
-                {tmdbPosterUrl && (
-                  <div className="absolute top-2 right-2 z-30 opacity-100 visible md:opacity-0 md:invisible md:group-hover:opacity-100 md:group-hover:visible pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto transition-all duration-300">
-                    <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
-                  </div>
-                )}
               </div>
             </div>
 
