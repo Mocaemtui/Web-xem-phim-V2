@@ -51,29 +51,12 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
       }
     });
 
-    // 2. Override metadata of movies with higher priority source data if available
-    const processedMovies = movies.map(movie => {
-      const key = getSmartKey(movie);
-      const priorityMovie = ophimMap.get(key) || phimapiMap.get(key);
-      if (priorityMovie && (movie as any).source !== (priorityMovie as any).source) {
-        return {
-          ...movie,
-          name: priorityMovie.name,
-          origin_name: priorityMovie.origin_name,
-          poster_url: priorityMovie.poster_url,
-          thumb_url: priorityMovie.thumb_url,
-          year: priorityMovie.year || movie.year,
-        };
-      }
-      return movie;
-    });
-
-    // 3. Filter or Deduplicate based on selectedSource
+    // 2. Filter or Deduplicate based on selectedSource
     if (selectedSource === "all") {
       const itemsMap = new Map<string, Movie>();
       
       // Sort movies: 'ophim' first, then 'phimapi'
-      const sortedMovies = [...processedMovies].sort((a: any, b: any) => {
+      const sortedMovies = [...movies].sort((a: any, b: any) => {
         const priority = { ophim: 2, phimapi: 1 } as any;
         const priorityA = priority[(a as any).source] || 0;
         const priorityB = priority[(b as any).source] || 0;
@@ -89,8 +72,8 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
 
       return Array.from(itemsMap.values());
     } else {
-      // Show all movies from that source directly, but with priority metadata overridden
-      return processedMovies.filter((movie: any) => (movie as any).source === selectedSource);
+      // Show all movies from that source directly without overriding metadata
+      return movies.filter((movie: any) => (movie as any).source === selectedSource);
     }
   }, [movies, selectedSource]);
 
