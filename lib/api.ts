@@ -132,10 +132,9 @@ export async function searchPhim(
 ): Promise<ApiResponse<MovieListResponse> | null> {
   const endpoint = `/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`;
   
-  const [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
+  const [ophimRes, phimapiRes] = await Promise.all([
     fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.OPHIM.url),
-    fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.PHIMAPI.url),
-    searchNguonC(keyword)
+    fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.PHIMAPI.url)
   ]);
 
   const itemsMap = new Map<string, Movie>();
@@ -154,7 +153,6 @@ export async function searchPhim(
 
   addItems(ophimRes);
   addItems(phimapiRes);
-  addItems(nguoncRes);
 
   if (itemsMap.size === 0) return null;
 
