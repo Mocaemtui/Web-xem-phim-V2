@@ -21,6 +21,8 @@ interface WatchPageClientProps {
 }
 
 export default function WatchPageClient({ movie, posterUrl }: WatchPageClientProps) {
+  const [episodes, setEpisodes] = useState(movie.episodes || []);
+  
   const [currentServerIndex, setCurrentServerIndex] = useState(() => {
     if (typeof window !== "undefined" && movie.episodes) {
       const preferred = localStorage.getItem("preferred_server_name");
@@ -38,10 +40,11 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   useEffect(() => {
     setIsRestored(false);
     setCurrentEpisodeIndex(0);
+    setEpisodes(movie.episodes || []);
     if (typeof window !== "undefined" && movie.episodes) {
       const preferred = localStorage.getItem("preferred_server_name");
       if (preferred) {
-        const idx = movie.episodes.findIndex(e => e.server_name === preferred);
+        const idx = (movie.episodes || []).findIndex(e => e.server_name === preferred);
         if (idx !== -1) {
           setCurrentServerIndex(idx);
           return;
@@ -49,6 +52,44 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
       }
     }
     setCurrentServerIndex(0);
+  }, [movie.slug, movie.episodes]);
+
+  // Client-side fetch for NguonC to bypass Vercel DataCenter Cloudflare blocks
+  useEffect(() => {
+    const fetchNguonC = async () => {
+      try {
+        const res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        if (data?.movie?.episodes) {
+          const nguonCEps = data.movie.episodes.map((epServer: any) => ({
+            server_name: `NguonC - ${epServer.server_name || "Vietsub"}`,
+            server_data: epServer.items?.map((ep: any) => ({
+              name: ep.name,
+              slug: ep.slug,
+              filename: ep.name,
+              link: "",
+              link_embed: ep.embed,
+              link_m3u8: ep.m3u8,
+            })) || []
+          }));
+          
+          setEpisodes(prev => {
+            if (prev.some(e => e.server_name.startsWith('NguonC'))) return prev;
+            return [...prev, ...nguonCEps];
+          });
+        }
+      } catch (error) {
+        console.error("Lỗi tải NguonC (Client):", error);
+      }
+    };
+
+    // Only fetch if NguonC hasn't already been provided by SSR
+    if (!episodes.some(e => e.server_name.startsWith('NguonC'))) {
+      fetchNguonC();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie.slug]);
 
   useEffect(() => {
@@ -59,7 +100,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
         const tapParam = params.get("tap");
         if (tapParam) {
           const tapIdx = parseInt(tapParam, 10) - 1;
-          if (movie.episodes?.[0]?.server_data?.[tapIdx]) {
+          if (episodes?.[0]?.server_data?.[tapIdx]) {
             setCurrentServerIndex(0);
             setCurrentEpisodeIndex(tapIdx);
             setIsRestored(true);
@@ -71,16 +112,15 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
       const history = getWatchHistory();
       const item = history.find(i => i.slug === movie.slug);
       if (item) {
-        if (movie.episodes?.[item.currentServerIndex]?.server_data?.[item.currentEpisodeIndex]) {
+        if (episodes?.[item.currentServerIndex]?.server_data?.[item.currentEpisodeIndex]) {
           setCurrentServerIndex(item.currentServerIndex);
           setCurrentEpisodeIndex(item.currentEpisodeIndex);
         }
       }
       setIsRestored(true);
     }
-  }, [movie, isRestored]);
+  }, [movie, isRestored, episodes]);
 
-  const episodes = movie.episodes || [];
   const currentServer = episodes[currentServerIndex];
   const serverData = currentServer?.server_data || [];
   const currentEpisode = serverData[currentEpisodeIndex];
