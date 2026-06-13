@@ -48,12 +48,14 @@ export default function EpisodeSelector({
 
   // Mark current episode as watched
   useEffect(() => {
-    if (!currentEpisode || !currentEpisode.link_m3u8) return;
+    if (!currentEpisode) return;
+    const epKey = currentEpisode.link_m3u8 || currentEpisode.link_embed || currentEpisode.slug;
+    if (!epKey) return;
     try {
       const stored = localStorage.getItem("watched_episodes_v3");
       const watched = stored ? JSON.parse(stored) : [];
-      if (!watched.includes(currentEpisode.link_m3u8)) {
-        watched.push(currentEpisode.link_m3u8);
+      if (!watched.includes(epKey)) {
+        watched.push(epKey);
         if (watched.length > 1000) watched.shift();
         localStorage.setItem("watched_episodes_v3", JSON.stringify(watched));
         setWatchedEpisodes(new Set(watched));
@@ -91,22 +93,26 @@ export default function EpisodeSelector({
 
       {/* Episode Selection - Show even for single episode (Phim lẻ) */}
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {serverData.map((episode, index) => (
-          <button
-            key={`${episode.slug}-${index}`}
-            type="button"
-            onClick={() => onSelectEpisode(index)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-              currentEpisodeIndex === index
-                ? "bg-blue-600 text-white"
-                : watchedEpisodes.has(episode.link_m3u8)
-                  ? "bg-zinc-900/60 text-zinc-500 hover:bg-zinc-800" // Mờ hơn (Dimmer)
-                  : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-            }`}
-          >
-            {episode.name}
-          </button>
-        ))}
+        {serverData.map((episode, index) => {
+          const epKey = episode.link_m3u8 || episode.link_embed || episode.slug;
+          const isWatched = watchedEpisodes.has(epKey);
+          return (
+            <button
+              key={`${episode.slug}-${index}`}
+              type="button"
+              onClick={() => onSelectEpisode(index)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer border ${
+                currentEpisodeIndex === index
+                  ? "bg-blue-600 text-white border-blue-500"
+                  : isWatched
+                    ? "bg-emerald-950/30 text-emerald-400 border-emerald-500/20 hover:bg-emerald-900/40"
+                    : "bg-zinc-800 text-zinc-300 border-zinc-700/50 hover:bg-zinc-700"
+              }`}
+            >
+              {episode.name}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

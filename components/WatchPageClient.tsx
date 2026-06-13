@@ -36,6 +36,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     return 0;
   });
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
+  const [selectedServerIndex, setSelectedServerIndex] = useState(currentServerIndex);
   const [isRestored, setIsRestored] = useState(false);
 
   // Reset trạng thái khi chuyển phim mới
@@ -43,17 +44,18 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     setIsRestored(false);
     setCurrentEpisodeIndex(0);
     setEpisodes(movie.episodes || []);
+    let initialIdx = 0;
     if (typeof window !== "undefined" && movie.episodes) {
       const preferred = localStorage.getItem("preferred_server_name");
       if (preferred) {
         const idx = (movie.episodes || []).findIndex(e => e.server_name === preferred);
         if (idx !== -1) {
-          setCurrentServerIndex(idx);
-          return;
+          initialIdx = idx;
         }
       }
     }
-    setCurrentServerIndex(0);
+    setCurrentServerIndex(initialIdx);
+    setSelectedServerIndex(initialIdx);
   }, [movie.slug, movie.episodes]);
 
   // Client-side fetch for NguonC to bypass Vercel DataCenter Cloudflare blocks
@@ -92,7 +94,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
               filename: item.name,
               link: "",
               link_embed: item.embed,
-              link_m3u8: "" // NguonC always empty for iframe fallback
+              link_m3u8: item.m3u8 || "" // NguonC always empty for iframe fallback
             }))
           }));
           
@@ -168,12 +170,12 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   }, [movie, currentEpisode, currentServerIndex, currentEpisodeIndex, isRestored]);
 
   const handleEpisodeSelect = (episodeIndex: number) => {
+    setCurrentServerIndex(selectedServerIndex);
     setCurrentEpisodeIndex(episodeIndex);
   };
 
   const handleServerChange = (serverIndex: number) => {
-    setCurrentServerIndex(serverIndex);
-    setCurrentEpisodeIndex(0);
+    setSelectedServerIndex(serverIndex);
     if (typeof window !== "undefined") {
       const preferred = episodes[serverIndex]?.server_name;
       if (preferred) {
@@ -274,78 +276,11 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
             </div>
           )}
 
-          {/* Content Description */}
-          {movie.content && (
-            <div 
-              className="text-zinc-400 text-sm leading-relaxed max-w-4xl"
-              dangerouslySetInnerHTML={{ __html: movie.content }}
-            />
-          )}
-        </div>
-
-        {/* Episode Selector */}
-        <div className="relative z-30">
-          {episodes.length > 0 && serverData.length > 0 ? (
-            <EpisodeSelector
-              episodes={episodes}
-              currentServerIndex={currentServerIndex}
-              currentEpisodeIndex={currentEpisodeIndex}
-              onSelectEpisode={handleEpisodeSelect}
-              onSelectServer={handleServerChange}
-            />
-          ) : (
-            <div className="mb-8 p-4 bg-zinc-900 rounded-lg">
-              <p className="text-zinc-400 text-sm">Không có tập phim nào</p>
-            </div>
-          )}
-        </div>
-
-        {/* Movie Info */}
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-            {movie.name} - {currentServer?.server_name} - {currentEpisode?.name.toLowerCase().includes("tập") ? currentEpisode.name : `Tập ${currentEpisode?.name || currentEpisodeIndex + 1}`}
-          </h1>
-          {movie.origin_name && (
-            <p className="text-lg text-zinc-400 mb-4">{movie.origin_name}</p>
-          )}
-
-          <div className="flex flex-wrap gap-3 text-sm mb-4">
-            <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
-              {movie.year}
-            </span>
-            {movie.quality && (
-              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
-                {movie.quality}
-              </span>
-            )}
-            {movie.lang && (
-              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
-                {movie.lang}
-              </span>
-            )}
-            {movie.time && (
-              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
-                {movie.time}
-              </span>
-            )}
-          </div>
-
-          {/* Categories */}
-          {movie.category && movie.category.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {movie.category.map((cat) => (
-                <span key={cat.id} className="text-sm text-blue-400">
-                  {cat.name}
-                </span>
-              ))}
-            </div>
-          )}
-
           {/* Countries */}
           {movie.country && movie.country.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {movie.country.map((country) => (
-                <span key={country.id} className="text-sm text-zinc-400">
+              {movie.country.map((country: any) => (
+                <span key={country.id || country.slug} className="text-sm text-zinc-400">
                   {country.name}
                 </span>
               ))}
@@ -362,13 +297,32 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
             </div>
           )}
 
-          {/* Description */}
+          {/* Content Description */}
           {movie.content && (
             <div 
-              className="text-zinc-300 leading-relaxed"
+              className="text-zinc-400 text-sm leading-relaxed max-w-4xl"
               dangerouslySetInnerHTML={{ __html: movie.content }}
             />
           )}
+        </div>
+
+        {/* Episode Selector */}
+        <div className="relative z-30">
+          {episodes.length > 0 && serverData.length > 0 ? (
+            <EpisodeSelector
+              episodes={episodes}
+              currentServerIndex={selectedServerIndex}
+              currentEpisodeIndex={currentServerIndex === selectedServerIndex ? currentEpisodeIndex : -1}
+              onSelectEpisode={handleEpisodeSelect}
+              onSelectServer={handleServerChange}
+            />
+          ) : (
+            <div className="mb-8 p-4 bg-zinc-900 rounded-lg">
+              <p className="text-zinc-400 text-sm">Không có tập phim nào</p>
+            </div>
+          )}
+        </div>
+
         </div>
       </div>
     </div>
