@@ -127,7 +127,7 @@ export const resolveImgUrl = (url: string | undefined): string => {
 
 // Lấy ảnh dọc (Poster) - Ophim dùng thumb_url, PhimAPI dùng poster_url
 export const getPosterUrl = (movie: { thumb_url?: string; poster_url?: string }): string => {
-  const isPhimApi = movie.thumb_url?.startsWith('upload/') || movie.poster_url?.startsWith('upload/');
+  const isPhimApi = movie.thumb_url?.includes('upload/') || movie.poster_url?.includes('upload/') || movie.thumb_url?.includes('phimimg.com') || movie.poster_url?.includes('phimimg.com');
   if (isPhimApi) {
     return resolveImgUrl(movie.poster_url || movie.thumb_url);
   }
@@ -136,7 +136,7 @@ export const getPosterUrl = (movie: { thumb_url?: string; poster_url?: string })
 
 // Lấy ảnh ngang (Backdrop) - Ophim dùng poster_url, PhimAPI dùng thumb_url
 export const getBackdropUrl = (movie: { thumb_url?: string; poster_url?: string }): string => {
-  const isPhimApi = movie.thumb_url?.startsWith('upload/') || movie.poster_url?.startsWith('upload/');
+  const isPhimApi = movie.thumb_url?.includes('upload/') || movie.poster_url?.includes('upload/') || movie.thumb_url?.includes('phimimg.com') || movie.poster_url?.includes('phimimg.com');
   if (isPhimApi) {
     return resolveImgUrl(movie.thumb_url || movie.poster_url);
   }
