@@ -63,14 +63,14 @@ export async function getChiTietPhimNguonC(slug: string): Promise<MovieDetail | 
   const episodes = data.movie.episodes?.map((epServer: any) => {
     return {
       server_name: epServer.server_name || "NguonC",
-      server_data: epServer.items.map((ep: any) => ({
+      server_data: epServer.items?.map((ep: any) => ({
         name: ep.name,
         slug: ep.slug,
         filename: ep.name,
         link: "",
         link_embed: ep.embed,
         link_m3u8: ep.m3u8,
-      }))
+      })) || []
     };
   }) || [];
 
