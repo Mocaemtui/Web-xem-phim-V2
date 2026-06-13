@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Movie } from "@/types/api";
-import { resolveImgUrl } from "@/lib/api";
+import { getPosterUrl } from "@/lib/api";
 
 interface MovieCardProps {
   movie: Movie;
@@ -13,7 +13,7 @@ export default function MovieCard({ movie, posterUrl }: MovieCardProps) {
     return null;
   }
 
-  const finalPosterUrl = movie.thumb_url ? resolveImgUrl(movie.thumb_url) : resolveImgUrl(movie.poster_url);
+  const finalPosterUrl = getPosterUrl(movie);
 
   return (
     <Link href={`/phim/${encodeURIComponent(movie.slug)}`} className="group">

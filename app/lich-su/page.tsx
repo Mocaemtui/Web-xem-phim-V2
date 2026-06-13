@@ -11,7 +11,7 @@ import {
   type WatchHistoryItem,
 } from "@/lib/watchHistory";
 
-import { resolveImgUrl } from "@/lib/api";
+import { getPosterUrl } from "@/lib/api";
 
 function timeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -123,7 +123,7 @@ export default function WatchHistoryPage() {
                 >
                   <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
                     <Image
-                      src={resolveImgUrl(item.thumb_url || item.poster_url)}
+                      src={getPosterUrl(item)}
                       alt={item.name}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"

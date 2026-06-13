@@ -7,7 +7,7 @@ import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
 import ImageToggle from "./ImageToggle";
 import { getWatchHistory } from "@/lib/watchHistory";
 
-import { resolveImgUrl } from "@/lib/api";
+import { getPosterUrl, getBackdropUrl } from "@/lib/api";
 
 interface MovieDetailProps {
   movie: MovieDetail;
@@ -19,8 +19,8 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
   const [useTmdbPoster, setUseTmdbPoster] = useState(false);
 
-  const ophimPosterUrl = resolveImgUrl(movie.poster_url);
-  const ophimThumbUrl = resolveImgUrl(movie.thumb_url);
+  const ophimPosterUrl = getBackdropUrl(movie);
+  const ophimThumbUrl = getPosterUrl(movie);
 
   // TMDB URLs
   const tmdbPosterFile = images?.images?.find(img => img.type === 'poster')?.file_path;

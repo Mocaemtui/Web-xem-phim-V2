@@ -84,6 +84,24 @@ export const resolveImgUrl = (url: string | undefined): string => {
   return finalUrl;
 };
 
+// Lấy ảnh dọc (Poster) - Ophim dùng thumb_url, PhimAPI dùng poster_url
+export const getPosterUrl = (movie: { thumb_url?: string; poster_url?: string }): string => {
+  const isPhimApi = movie.thumb_url?.startsWith('upload/') || movie.poster_url?.startsWith('upload/');
+  if (isPhimApi) {
+    return resolveImgUrl(movie.poster_url || movie.thumb_url);
+  }
+  return resolveImgUrl(movie.thumb_url || movie.poster_url);
+};
+
+// Lấy ảnh ngang (Backdrop) - Ophim dùng poster_url, PhimAPI dùng thumb_url
+export const getBackdropUrl = (movie: { thumb_url?: string; poster_url?: string }): string => {
+  const isPhimApi = movie.thumb_url?.startsWith('upload/') || movie.poster_url?.startsWith('upload/');
+  if (isPhimApi) {
+    return resolveImgUrl(movie.thumb_url || movie.poster_url);
+  }
+  return resolveImgUrl(movie.poster_url || movie.thumb_url);
+};
+
 export async function getPhimBo(
   page: number = 1,
   limit: number = 20

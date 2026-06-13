@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Clock } from "lucide-react";
+import { Play, Clock, ChevronRight } from "lucide-react";
 import { getWatchHistory, type WatchHistoryItem } from "@/lib/watchHistory";
 import SectionTitle from "@/components/SectionTitle";
-import { resolveImgUrl } from "@/lib/api";
+import { getPosterUrl } from "@/lib/api";
 
 export default function HomeHistorySection() {
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
@@ -33,7 +33,7 @@ export default function HomeHistorySection() {
           >
             <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
               <Image
-                src={resolveImgUrl(item.thumb_url || item.poster_url)}
+                src={getPosterUrl(item)}
                 alt={item.name}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105 will-change-transform"
