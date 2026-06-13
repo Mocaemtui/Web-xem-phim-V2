@@ -7,7 +7,7 @@ import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
 import ImageToggle from "./ImageToggle";
 import { getWatchHistory } from "@/lib/watchHistory";
 
-import { getPosterUrl, getBackdropUrl } from "@/lib/api";
+import { getPosterUrl, getBackdropUrl, resolveImgUrl } from "@/lib/api";
 
 interface MovieDetailProps {
   movie: MovieDetail;
@@ -48,20 +48,13 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   if (tmdbPosterUrl) availablePosters.push(tmdbPosterUrl);
   if (hasAltPoster) availablePosters.push(altThumbUrl!);
 
-  // Single-image transition states
-  const [backdropUrl, setBackdropUrl] = useState(primaryPosterUrl);
-  const [posterUrl, setPosterUrl] = useState(primaryThumbUrl);
+  // Current active images
+  const currentBackdropUrl = availableBackdrops[backdropSource % availableBackdrops.length];
+  const currentPosterUrl = availablePosters[posterSource % availablePosters.length];
+
+  // Transition states
   const [backdropFade, setBackdropFade] = useState(true);
   const [posterFade, setPosterFade] = useState(true);
-
-  // Sync states when source preferences change
-  useEffect(() => {
-    setBackdropUrl(availableBackdrops[backdropSource % availableBackdrops.length]);
-  }, [backdropSource, primaryPosterUrl, tmdbBackdropUrl, altPosterUrl]);
-
-  useEffect(() => {
-    setPosterUrl(availablePosters[posterSource % availablePosters.length]);
-  }, [posterSource, primaryThumbUrl, tmdbPosterUrl, altThumbUrl]);
 
   // Handle transitions smoothly
   const toggleBackdrop = () => {
@@ -108,7 +101,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
       {/* Backdrop */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 group">
         <img
-          src={backdropUrl}
+          src={currentBackdropUrl}
           alt={movie.name}
           className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out cursor-pointer md:cursor-default ${backdropFade ? "opacity-100" : "opacity-0"}`}
           onClick={() => { if (window.innerWidth < 768 && availableBackdrops.length > 1) toggleBackdrop(); }}
@@ -130,7 +123,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           <div className="hidden md:block">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
               <img
-                src={posterUrl}
+                src={currentPosterUrl}
                 alt={movie.name}
                 className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
               />
@@ -148,7 +141,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
             <div className="md:hidden">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900 cursor-pointer" onClick={() => { if (availablePosters.length > 1) togglePoster(); }}>
                 <img
-                  src={posterUrl}
+                  src={currentPosterUrl}
                   alt={movie.name}
                   className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
                 />
