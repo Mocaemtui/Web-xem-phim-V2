@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import WatchPageClient from "@/components/WatchPageClient";
+import MovieDetailClientLoader from "@/components/MovieDetailClientLoader";
 import { getChiTietPhim } from "@/lib/api";
 
 interface PageProps {
@@ -19,7 +20,8 @@ export default async function WatchPage({ params }: PageProps) {
   const movieData = await getChiTietPhim(decodedSlug);
 
   if (!movieData || !movieData.data || !movieData.data.item) {
-    notFound();
+    // Fallback client-side NguonC fetch
+    return <MovieDetailClientLoader slug={decodedSlug} type="xem-phim" />;
   }
 
   const movie = movieData.data.item;

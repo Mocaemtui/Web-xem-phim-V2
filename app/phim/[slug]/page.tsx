@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import MovieDetail from "@/components/MovieDetail";
+import MovieDetailClientLoader from "@/components/MovieDetailClientLoader";
 import { getChiTietPhim, getHinhAnhPhim, getPeoplesPhim } from "@/lib/api";
 
 interface PageProps {
@@ -23,7 +24,8 @@ export default async function MoviePage({ params }: PageProps) {
   ]);
 
   if (!movieData || !movieData.data || !movieData.data.item) {
-    notFound();
+    // If server fails (due to Vercel blocking NguonC), fallback to client-side loading
+    return <MovieDetailClientLoader slug={decodedSlug} type="phim" />;
   }
 
   const movie = movieData.data.item;
