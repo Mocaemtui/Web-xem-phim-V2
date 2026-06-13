@@ -383,7 +383,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
           {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden & hovered near top-right) */}
           {isChatHidden && (
-            <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 group/overlay"
+            <div className={`absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md transition-opacity duration-300 group/overlay ${
+              unreadCount > 0 ? "opacity-100 ring-2 ring-red-500/50" : "opacity-0 hover:opacity-100 focus-within:opacity-100"
+            }`}
                  style={{ contentVisibility: "auto" }}>
               {/* Invisible hover helper to make it easy to trigger */}
               <div className="absolute -top-4 -right-4 -bottom-4 -left-12 z-[-1] pointer-events-auto" />
@@ -507,10 +509,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Title and Share Link with Zoom Button */}
         {!isTheaterMode && (
-          <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
-            <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
-              {movie.name} - Tập {currentEpisodeIndex + 1}
-            </h1>
+          <div className="flex items-center justify-end gap-2 mb-2.5 shrink-0">
             <div className="flex items-center gap-2">
               {/* Zoom / Theater Toggle Button on Desktop */}
               <button
@@ -533,7 +532,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 onClick={copyLink}
                 className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0 cursor-pointer active:scale-95"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5" text-green-400 /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Đã copy" : "Mời bạn"}</span>
               </button>
             </div>
@@ -750,6 +749,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only, scroll down to see) */}
       {!isTheaterMode && (
         <div className="hidden md:block w-full shrink-0 px-6 py-6 bg-zinc-950/60 border-t border-zinc-900/50 backdrop-blur-md relative z-20">
+          <h1 className="text-xl md:text-2xl font-bold text-white mb-4">
+            {movie.name} - Tập {currentEpisodeIndex + 1}
+          </h1>
           {episodes.length > 0 && serverData.length > 0 && (
             <EpisodeSelector
               episodes={episodes}

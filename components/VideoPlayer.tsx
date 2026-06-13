@@ -566,16 +566,17 @@ export default function VideoPlayer({
           ref={canvasRef}
           width="16"
           height="9"
-          className="absolute inset-0 w-full h-full blur-[60px] opacity-70 scale-[1.15] pointer-events-none transition-opacity duration-500 rounded-lg"
-          style={{ zIndex: 0 }}
+          className="absolute inset-0 w-full h-full blur-[70px] opacity-80 scale-[1.18] pointer-events-none transition-opacity duration-500 rounded-lg"
+          style={{ zIndex: 1 }}
         />
       )}
 
       {/* Player Container */}
       <div 
-        className={`relative w-full h-full max-h-full bg-transparent rounded-lg group z-10 flex items-center justify-center ${
+        className={`relative w-full h-full max-h-full bg-transparent rounded-lg group flex items-center justify-center ${
           isFullscreen || isTheaterMode || isWatchTogether ? "overflow-visible" : "overflow-hidden"
         }`}
+        style={{ zIndex: 2 }}
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
@@ -590,8 +591,9 @@ export default function VideoPlayer({
             crossOrigin="anonymous"
             playsInline
             onClick={togglePlay}
-            className="max-w-full max-h-full aspect-video relative z-10 cursor-pointer"
+            className="max-w-full max-h-full aspect-video relative cursor-pointer"
             style={{
+              zIndex: 2,
               objectFit: "contain",
               transform: "scale(1)",
               transition: "object-fit 0.3s ease"
