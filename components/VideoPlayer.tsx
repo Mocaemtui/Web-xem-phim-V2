@@ -399,7 +399,7 @@ export default function VideoPlayer({
       if (!video) return;
 
       // Skip hotkeys if user is focusing an input or editable field (like RoomChat)
-      const activeEl = document.activeElement;
+      const activeEl = document.activeElement as HTMLElement | null;
       if (
         activeEl &&
         (activeEl.tagName === "INPUT" ||
