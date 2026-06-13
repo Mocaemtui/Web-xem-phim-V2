@@ -21,9 +21,35 @@ interface WatchPageClientProps {
 }
 
 export default function WatchPageClient({ movie, posterUrl }: WatchPageClientProps) {
-  const [currentServerIndex, setCurrentServerIndex] = useState(0);
+  const [currentServerIndex, setCurrentServerIndex] = useState(() => {
+    if (typeof window !== "undefined" && movie.episodes) {
+      const preferred = localStorage.getItem("preferred_server_name");
+      if (preferred) {
+        const idx = movie.episodes.findIndex(e => e.server_name === preferred);
+        if (idx !== -1) return idx;
+      }
+    }
+    return 0;
+  });
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
   const [isRestored, setIsRestored] = useState(false);
+
+  // Reset trạng thái khi chuyển phim mới
+  useEffect(() => {
+    setIsRestored(false);
+    setCurrentEpisodeIndex(0);
+    if (typeof window !== "undefined" && movie.episodes) {
+      const preferred = localStorage.getItem("preferred_server_name");
+      if (preferred) {
+        const idx = movie.episodes.findIndex(e => e.server_name === preferred);
+        if (idx !== -1) {
+          setCurrentServerIndex(idx);
+          return;
+        }
+      }
+    }
+    setCurrentServerIndex(0);
+  }, [movie.slug]);
 
   useEffect(() => {
     if (!isRestored) {
@@ -78,13 +104,19 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   const handleServerChange = (serverIndex: number) => {
     setCurrentServerIndex(serverIndex);
     setCurrentEpisodeIndex(0);
+    if (typeof window !== "undefined") {
+      const preferred = episodes[serverIndex]?.server_name;
+      if (preferred) {
+        localStorage.setItem("preferred_server_name", preferred);
+      }
+    }
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
       <div className="container mx-auto px-4 py-8">
         {/* Video Player */}
-        <div className="mb-8 relative z-10">
+        <div className="mb-8 relative z-10 w-full aspect-video">
           {currentEpisode ? (
             <VideoPlayer
               key={`${currentServerIndex}-${currentEpisodeIndex}`}

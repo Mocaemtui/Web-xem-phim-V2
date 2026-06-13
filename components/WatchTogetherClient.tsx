@@ -22,7 +22,16 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isJoined, setIsJoined] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [currentServerIndex, setCurrentServerIndex] = useState(0);
+  const [currentServerIndex, setCurrentServerIndex] = useState(() => {
+    if (typeof window !== "undefined" && movie.episodes) {
+      const preferred = localStorage.getItem("preferred_server_name");
+      if (preferred) {
+        const idx = movie.episodes.findIndex(e => e.server_name === preferred);
+        if (idx !== -1) return idx;
+      }
+    }
+    return 0;
+  });
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
   const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "episodes" | "watchers">("chat");
   const [isTheaterMode, setIsTheaterMode] = useState(false);
@@ -33,6 +42,35 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isChatHidden, setIsChatHidden] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
+
+  // Sound Notification settings
+  const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("chat_sound_enabled");
+      return saved !== "false";
+    }
+    return true;
+  });
+
+  const handleSoundToggle = () => {
+    setIsSoundEnabled(prev => {
+      const nextVal = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("chat_sound_enabled", String(nextVal));
+      }
+      return nextVal;
+    });
+  };
+
+  // Host Sync states
+  const [showHostSyncPrompt, setShowHostSyncPrompt] = useState(false);
+  const [hostSavedTime, setHostSavedTime] = useState<number | null>(null);
+
+  const episodes = movie.episodes || [];
+  const currentServer = episodes[currentServerIndex];
+  const serverData = currentServer?.server_data || [];
+  const currentEpisode = serverData[currentEpisodeIndex];
+  const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -148,6 +186,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     triggerChangeEpisode,
     triggerReaction,
     triggerTyping,
+    triggerSystemAction,
     sendMessage,
     onPlayRef,
     onPauseRef,
@@ -158,6 +197,34 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   } = useWatchTogether(isJoined ? roomId : "", username, true);
 
   const lastMessageCountRef = useRef(0);
+  const lastBufferTimeRef = useRef(0);
+
+  // Online/Offline tracking
+  useEffect(() => {
+    if (!isJoined) return;
+    const handleOffline = () => {
+      triggerSystemAction(`${username} đã bị mất kết nối mạng.`);
+    };
+    const handleOnline = () => {
+      triggerSystemAction(`${username} đã kết nối mạng trở lại.`);
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [username, isJoined, triggerSystemAction]);
+
+  const handleBuffering = (isBuffering: boolean) => {
+    if (isBuffering && isJoined) {
+      const now = Date.now();
+      if (now - lastBufferTimeRef.current > 6000) { // limit to every 6s to avoid spam
+        triggerSystemAction(`${username} đang gặp sự cố mạng / đang tải video (buffering)...`);
+        lastBufferTimeRef.current = now;
+      }
+    }
+  };
 
   useEffect(() => {
     lastMessageCountRef.current = messages.length;
@@ -176,10 +243,33 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       if (!lastMsg.isSystem && isChatHidden) {
         setUnreadCount(prev => prev + 1);
         setNewMessageNotification(`Có tin nhắn mới`);
+        
+        // Play gentle notification sound when chat is hidden and sound is enabled
+        if (isSoundEnabled) {
+          try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note (ting)
+            
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+          } catch (e) {
+            // Fallback if audio context is blocked
+          }
+        }
       }
       lastMessageCountRef.current = messages.length;
     }
-  }, [messages, isChatHidden]);
+  }, [messages, isChatHidden, isSoundEnabled]);
 
   // Bind remote events to local video player
   useEffect(() => {
@@ -232,6 +322,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
     // Khi nhận được phản hồi đồng bộ từ người khác
     onSyncResponseRef.current = (data) => {
+      if (hasSynced.current) return;
       hasSynced.current = true;
       if (data.serverIndex !== undefined && data.episodeIndex !== undefined) {
         setCurrentServerIndex(data.serverIndex);
@@ -271,6 +362,42 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     }
   }, [isJoined]);
 
+  const promptedEpisodeRef = useRef("");
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  useEffect(() => {
+    if (isJoined && currentEpisode && promptedEpisodeRef.current !== currentEpisode.link_m3u8) {
+      const isHost = typeof window !== "undefined" && sessionStorage.getItem('host_' + roomId) === 'true';
+      if (isHost) {
+        promptedEpisodeRef.current = currentEpisode.link_m3u8;
+        const key = `playback_progress_${currentEpisode.link_m3u8}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          const parsed = parseFloat(saved);
+          if (parsed > 10) {
+            setHostSavedTime(parsed);
+            setShowHostSyncPrompt(true);
+          }
+        }
+      }
+    }
+  }, [isJoined, currentEpisode, roomId]);
+
+  const handleHostSyncConfirm = () => {
+    if (hostSavedTime) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = hostSavedTime;
+      }
+      triggerSeek(hostSavedTime);
+      sendMessage(`[Hệ thống] Host đã đồng bộ mốc xem dở từ trước (${formatTime(hostSavedTime)}) cho cả phòng.`);
+    }
+    setShowHostSyncPrompt(false);
+  };
+
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,6 +414,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   const handleSyncClick = () => {
     // Xin đồng bộ thời gian từ bất kỳ ai trong phòng
+    hasSynced.current = false;
     triggerRequestSync();
   };
 
@@ -322,14 +450,31 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     );
   }
 
-  const episodes = movie.episodes || [];
-  const currentServer = episodes[currentServerIndex];
-  const serverData = currentServer?.server_data || [];
-  const currentEpisode = serverData[currentEpisodeIndex];
-  const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
-
   return (
     <div ref={containerRef} className="relative min-h-screen bg-zinc-950 flex flex-col overflow-y-auto scroll-smooth">
+      {/* Host Sync Playback Prompt */}
+      {showHostSyncPrompt && hostSavedTime && (
+        <div className="fixed top-24 left-4 bg-zinc-950/95 border border-zinc-800 text-white px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Lịch sử xem dở của bạn</span>
+            <span className="text-xs font-semibold text-white">Đồng bộ mốc xem dở {formatTime(hostSavedTime)} cho cả phòng?</span>
+          </div>
+          <div className="flex items-center gap-1.5 ml-2">
+            <button
+              onClick={handleHostSyncConfirm}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 shadow-md"
+            >
+              Đồng bộ phòng
+            </button>
+            <button
+              onClick={() => setShowHostSyncPrompt(false)}
+              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700/50"
+            >
+              Bỏ qua
+            </button>
+          </div>
+        </div>
+      )}
       {/* Global Background Ambient Glow Canvas */}
       {ambientActive && (
         <canvas
@@ -355,7 +500,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
 
       {/* Main workspace: Side-by-side Player and Chat Sidebar (Fills the screen first fold) */}
-      <div className="h-screen w-full flex flex-col md:flex-row shrink-0 relative overflow-hidden">
+      <div className="flex-1 w-full h-full flex flex-col md:flex-row shrink-0 relative overflow-hidden">
         {/* Left Area: Video Player & Controls */}
         <div 
           className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
@@ -373,10 +518,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         )}
 
         {/* Video Player */}
-        <div className={`w-full relative transition-all ${
+        <div className={`w-full transition-all ${
           isTheaterMode 
-            ? "h-full max-h-screen flex items-center justify-end p-0 z-40" 
-            : "relative z-20 bg-transparent p-0 shrink min-h-0 mb-3 md:mb-6 flex-1 flex items-center justify-center"
+            ? "h-full max-h-screen flex items-center justify-end p-0 z-40 fixed inset-0" 
+            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-zinc-950 md:bg-transparent p-0 shrink min-h-0 md:mb-6 md:flex-1 flex items-center justify-center h-[56.25vw] md:h-auto"
         }`}>
 
           {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden & hovered near top-right) */}
@@ -479,6 +624,23 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 )}
               </button>
 
+              {/* Floating Sound Toggle Button */}
+              <button
+                onClick={handleSoundToggle}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isSoundEnabled ? "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200" : "bg-zinc-800/80 border-zinc-700 text-red-400"}`}
+                title={isSoundEnabled ? "Tắt âm báo tin nhắn" : "Bật âm báo tin nhắn"}
+              >
+                {isSoundEnabled ? (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                )}
+              </button>
+
             </div>
           )}
 
@@ -502,7 +664,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 onSeekSync={(time) => {
                   if (hasSynced.current && !isReceivingEvent.current) triggerSeek(time);
                 }}
-
+                onBuffering={handleBuffering}
                 hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
                 onAutoNext={() => {
                   if (currentEpisodeIndex < serverData.length - 1) {
@@ -593,6 +755,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                         setCurrentServerIndex(idx);
                         setCurrentEpisodeIndex(0);
                         triggerChangeEpisode(idx, 0);
+                        if (typeof window !== "undefined") {
+                          const preferred = episodes[idx]?.server_name;
+                          if (preferred) {
+                            localStorage.setItem("preferred_server_name", preferred);
+                          }
+                        }
                       }}
                     />
                   )}
@@ -728,6 +896,23 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           >
             {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </button>
+
+          {/* Sound Toggle Button */}
+          <button
+            onClick={handleSoundToggle}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isSoundEnabled ? "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200" : "bg-zinc-800/80 border-zinc-700 text-red-400"}`}
+            title={isSoundEnabled ? "Tắt âm báo tin nhắn" : "Bật âm báo tin nhắn"}
+          >
+            {isSoundEnabled ? (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            )}
+          </button>
         </div>
 
 
@@ -763,6 +948,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 setCurrentServerIndex(idx);
                 setCurrentEpisodeIndex(0);
                 triggerChangeEpisode(idx, 0);
+                if (typeof window !== "undefined") {
+                  const preferred = episodes[idx]?.server_name;
+                  if (preferred) {
+                    localStorage.setItem("preferred_server_name", preferred);
+                  }
+                }
               }}
             />
           )}

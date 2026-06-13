@@ -13,6 +13,12 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
   // Auto scroll to bottom of chat container only, avoiding scrolling the whole webpage
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -84,13 +90,13 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         {/* Typing Indicator */}
         {typingUsers.length > 0 && (
           <div className="flex items-center gap-2 text-zinc-500 text-xs mt-2 transition-all">
-            <div className="bg-zinc-900/50 px-3 py-2 rounded-2xl rounded-tl-none flex items-center gap-1.5 border border-zinc-800/10">
-              <span className="font-semibold text-zinc-400">{typingUsers[0]}</span>
-              <span className="text-zinc-500 text-[10px]">đang gõ</span>
-              <div className="flex gap-1 items-center ml-1">
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            <div className="bg-zinc-900/60 border border-zinc-800/40 px-3.5 py-2 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm backdrop-blur-md">
+              <span className="font-semibold text-zinc-300">{typingUsers.length > 1 ? `${typingUsers.length} người` : typingUsers[0]}</span>
+              <span className="text-zinc-400">đang nhập</span>
+              <div className="flex gap-1.5 items-center ml-1">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '0.8s' }}></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms', animationDuration: '0.8s' }}></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms', animationDuration: '0.8s' }}></span>
               </div>
             </div>
           </div>

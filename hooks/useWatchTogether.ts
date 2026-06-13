@@ -99,6 +99,7 @@ export const useWatchTogether = (roomId: string, username: string, initialIsHost
         const removedUser = prev.find((w) => w.id === member.id);
         if (removedUser) {
           addSystemMessage(`${removedUser.name} vừa rời phòng`);
+          setTypingUsers((typing) => typing.filter((name) => name !== removedUser.name));
         }
         return prev.filter((w) => w.id !== member.id);
       });
@@ -214,6 +215,11 @@ export const useWatchTogether = (roomId: string, username: string, initialIsHost
     channelRef.current?.trigger('client-typing', { name: username, isTyping });
   };
 
+  const triggerSystemAction = (text: string) => {
+    channelRef.current?.trigger('client-system-action', { text });
+    addSystemMessage(text);
+  };
+
   const sendMessage = (text: string) => {
     const message: ChatMessage = {
       id: Math.random().toString(36).substring(7),
@@ -240,6 +246,7 @@ export const useWatchTogether = (roomId: string, username: string, initialIsHost
     triggerChangeEpisode,
     triggerReaction,
     triggerTyping,
+    triggerSystemAction,
     sendMessage,
     onPlayRef,
     onPauseRef,
@@ -249,3 +256,4 @@ export const useWatchTogether = (roomId: string, username: string, initialIsHost
     onChangeEpisodeRef,
   };
 };
+

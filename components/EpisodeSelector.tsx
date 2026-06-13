@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 
 interface Episode {
   name: string;
@@ -31,6 +32,34 @@ export default function EpisodeSelector({
   onSelectServer 
 }: EpisodeSelectorProps) {
   const serverData = episodes[currentServerIndex]?.server_data || [];
+  const currentEpisode = serverData[currentEpisodeIndex];
+
+  const [watchedEpisodes, setWatchedEpisodes] = useState<Set<string>>(new Set());
+
+  // Load watched history on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("watched_episodes_v3");
+      if (stored) {
+        setWatchedEpisodes(new Set(JSON.parse(stored)));
+      }
+    } catch {}
+  }, []);
+
+  // Mark current episode as watched
+  useEffect(() => {
+    if (!currentEpisode || !currentEpisode.link_m3u8) return;
+    try {
+      const stored = localStorage.getItem("watched_episodes_v3");
+      const watched = stored ? JSON.parse(stored) : [];
+      if (!watched.includes(currentEpisode.link_m3u8)) {
+        watched.push(currentEpisode.link_m3u8);
+        if (watched.length > 1000) watched.shift();
+        localStorage.setItem("watched_episodes_v3", JSON.stringify(watched));
+        setWatchedEpisodes(new Set(watched));
+      }
+    } catch {}
+  }, [currentEpisode]);
 
   return (
     <div className="mb-8 relative z-20">
@@ -70,7 +99,9 @@ export default function EpisodeSelector({
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               currentEpisodeIndex === index
                 ? "bg-blue-600 text-white"
-                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                : watchedEpisodes.has(episode.link_m3u8)
+                  ? "bg-zinc-900/60 text-zinc-500 hover:bg-zinc-800" // Mờ hơn (Dimmer)
+                  : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
             }`}
           >
             {episode.name}

@@ -10,6 +10,7 @@ interface VideoPlayerProps {
   onPlaySync?: () => void;
   onPauseSync?: () => void;
   onSeekSync?: (time: number) => void;
+  onBuffering?: (isBuffering: boolean) => void;
   externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
   hasNextEpisode?: boolean;
   nextVideoUrl?: string;
@@ -25,6 +26,7 @@ export default function VideoPlayer({
   onPlaySync,
   onPauseSync,
   onSeekSync,
+  onBuffering,
   externalVideoRef,
   hasNextEpisode,
   nextVideoUrl,
@@ -34,12 +36,22 @@ export default function VideoPlayer({
 }: VideoPlayerProps) {
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const videoRef = externalVideoRef || internalVideoRef;
-  
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Web Audio API for Volume Boost (200%) & Distortion Reduction
+  const audioContextRef = useRef<any>(null);
+  const gainNodeRef = useRef<any>(null);
+  const compressorRef = useRef<any>(null);
+
+  // Double tap feedback
+  const [doubleTapFeedback, setDoubleTapFeedback] = useState<{
+    show: boolean;
+    type: "left" | "right";
+  }>({ show: false, type: "left" });
 
   // New Features States
   const [ambientActive, setAmbientActive] = useState(() => {
@@ -82,6 +94,14 @@ export default function VideoPlayer({
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const lastSavedTimeRef = useRef(0);
   
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,7 +132,7 @@ export default function VideoPlayer({
       if (video.paused || video.ended) return;
       
       // Only draw if tab is visible, element is in viewport, and rate cap (15fps) is met
-      if (isVisible && !document.hidden && now - lastDrawTime >= 66) {
+      if ((isVisible || document.fullscreenElement) && !document.hidden && now - lastDrawTime >= 66) {
         try {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           lastDrawTime = now;
@@ -228,6 +248,7 @@ export default function VideoPlayer({
     if (!video || !videoUrl) return;
 
     let hls: Hls | null = null;
+    let playVideo: (() => void) | null = null;
 
     if (Hls.isSupported() && (videoUrl.includes(".m3u8") || videoUrl.includes("m3u8"))) {
       hls = new Hls({
@@ -242,7 +263,9 @@ export default function VideoPlayer({
       hls.attachMedia(video);
       
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
+        if (isMountedRef.current) {
+          video.play().catch(() => {});
+        }
       });
       
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -262,14 +285,22 @@ export default function VideoPlayer({
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = videoUrl;
-      video.addEventListener("loadedmetadata", () => {
-        video.play().catch(() => {});
-      });
+      playVideo = () => {
+        if (isMountedRef.current) {
+          video.play().catch(() => {});
+        }
+      };
+      video.addEventListener("loadedmetadata", playVideo);
+    } else {
+      video.src = videoUrl;
     }
 
     return () => {
       if (hls) {
         hls.destroy();
+      }
+      if (playVideo) {
+        video.removeEventListener("loadedmetadata", playVideo);
       }
     };
   }, [videoUrl, embedUrl]);
@@ -302,21 +333,67 @@ export default function VideoPlayer({
       }
     };
 
+    const onWaiting = () => {
+      if (onBuffering) onBuffering(true);
+    };
+
+    const onPlaying = () => {
+      if (onBuffering) onBuffering(false);
+    };
+
     video.addEventListener("play", onPlayStateChange);
     video.addEventListener("pause", onPlayStateChange);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onPlaying);
 
     return () => {
       video.removeEventListener("play", onPlayStateChange);
       video.removeEventListener("pause", onPlayStateChange);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onPlaying);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
     };
-  }, [videoRef]);
+  }, [videoRef, onBuffering]);
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Initialize Web Audio API on first interaction to allow 200% boost & anti-clipping
+    if (!audioContextRef.current) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const source = ctx.createMediaElementSource(video);
+          
+          const compressor = ctx.createDynamicsCompressor();
+          compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+          compressor.knee.setValueAtTime(30, ctx.currentTime);
+          compressor.ratio.setValueAtTime(12, ctx.currentTime);
+          compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+          compressor.release.setValueAtTime(0.25, ctx.currentTime);
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.value = volume > 1 ? volume : 1;
+
+          source.connect(compressor);
+          compressor.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          audioContextRef.current = ctx;
+          gainNodeRef.current = gainNode;
+          compressorRef.current = compressor;
+        }
+      } catch (err) {
+        console.warn("Web Audio API not supported or blocked by CORS", err);
+        audioContextRef.current = "failed";
+      }
+    } else if (audioContextRef.current !== "failed" && audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume();
+    }
 
     if (video.paused) {
       video.play().catch(() => {});
@@ -361,7 +438,19 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
     const vol = parseFloat(e.target.value);
-    video.volume = vol;
+    
+    if (vol <= 1) {
+      video.volume = vol;
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 1;
+      }
+    } else {
+      video.volume = 1; // max native volume
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = vol; // boost up to 2.0
+      }
+    }
+    
     setVolume(vol);
     resetControlsTimer();
   };
@@ -407,7 +496,7 @@ export default function VideoPlayer({
       const video = videoRef.current;
       if (!isCurrentlyFullscreen && video && isPlaying) {
         setTimeout(() => {
-          if (video.paused) {
+          if (isMountedRef.current && video.paused) {
             video.play().catch(() => {});
           }
         }, 100);
@@ -585,73 +674,106 @@ export default function VideoPlayer({
         }}
       >
         {videoUrl ? (
-          <video
-            ref={videoRef}
-            poster={poster}
-            onTouchStart={(e) => {
-              // Double Tap to Seek on Mobile
-              const touch = e.touches[0];
-              const video = videoRef.current;
-              if (!video) return;
+          <>
+            <video
+              ref={videoRef}
+              poster={poster}
+              crossOrigin="anonymous"
+              onTouchStart={(e) => {
+                // Double Tap to Seek on Mobile
+                const touch = e.touches[0];
+                const video = videoRef.current;
+                if (!video) return;
 
-              const rect = e.currentTarget.getBoundingClientRect();
-              const touchX = touch.clientX - rect.left;
-              const width = rect.width;
-              
-              const now = Date.now();
-              const DOUBLE_TAP_DELAY = 300;
-              
-              // Custom handling for double tap
-              const lastTap = (video as any).lastTap || 0;
-              if (now - lastTap < DOUBLE_TAP_DELAY) {
-                e.preventDefault();
-                if (touchX < width / 2) {
-                  // Double tap left side -> seek back 10s
-                  const newTime = Math.max(0, video.currentTime - 10);
-                  video.currentTime = newTime;
-                  setCurrentTime(newTime);
-                  if (onSeekSync) onSeekSync(newTime);
+                const rect = e.currentTarget.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const width = rect.width;
+                
+                const now = Date.now();
+                const DOUBLE_TAP_DELAY = 300;
+                
+                // Custom handling for double tap
+                const lastTap = (video as any).lastTap || 0;
+                if (now - lastTap < DOUBLE_TAP_DELAY) {
+                  e.preventDefault();
+                  const isLeft = touchX < width / 2;
+                  if (isLeft) {
+                    // Double tap left side -> seek back 10s
+                    const newTime = Math.max(0, video.currentTime - 10);
+                    video.currentTime = newTime;
+                    setCurrentTime(newTime);
+                    if (onSeekSync) onSeekSync(newTime);
+                  } else {
+                    // Double tap right side -> seek forward 10s
+                    const newTime = Math.min(video.duration || 0, video.currentTime + 10);
+                    video.currentTime = newTime;
+                    setCurrentTime(newTime);
+                    if (onSeekSync) onSeekSync(newTime);
+                  }
+                  setDoubleTapFeedback({ show: true, type: isLeft ? "left" : "right" });
+                  setTimeout(() => {
+                    if (isMountedRef.current) {
+                      setDoubleTapFeedback((prev) => ({ ...prev, show: false }));
+                    }
+                  }, 600);
+                  resetControlsTimer();
+                  (video as any).lastTap = 0; // reset
                 } else {
-                  // Double tap right side -> seek forward 10s
-                  const newTime = Math.min(video.duration || 0, video.currentTime + 10);
-                  video.currentTime = newTime;
-                  setCurrentTime(newTime);
-                  if (onSeekSync) onSeekSync(newTime);
+                  (video as any).lastTap = now;
                 }
-                resetControlsTimer();
-                (video as any).lastTap = 0; // reset
-              } else {
-                (video as any).lastTap = now;
-              }
-            }}
-            onClick={(e) => {
-              // On desktop, regular click triggers play/pause. On mobile, handled smoothly.
-              const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-              if (!isMobile) {
-                togglePlay();
-              }
-            }}
-            className="max-w-full max-h-full aspect-video relative cursor-pointer"
-            style={{
-              zIndex: 2,
-              objectFit: "contain",
-              transform: "scale(1)",
-              transition: "object-fit 0.3s ease"
-            }}
-            onTimeUpdate={handleTimeUpdate}
-            onPlay={() => {
-               setIsPlaying(true);
-               if (onPlaySync) onPlaySync();
-            }}
-            onPause={() => {
-               setIsPlaying(false);
-               if (onPauseSync) onPauseSync();
-            }}
-            onEnded={() => {
-               setIsPlaying(false);
-               if (onPauseSync) onPauseSync();
-            }}
-          />
+              }}
+              onClick={(e) => {
+                // On desktop, regular click triggers play/pause. On mobile, handled smoothly.
+                const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+                if (!isMobile) {
+                  togglePlay();
+                }
+              }}
+              className="max-w-full max-h-full aspect-video relative cursor-pointer"
+              style={{
+                zIndex: 2,
+                objectFit: "contain",
+                transform: "scale(1)",
+                transition: "object-fit 0.3s ease"
+              }}
+              onTimeUpdate={handleTimeUpdate}
+              onPlay={() => {
+                 setIsPlaying(true);
+                 if (onPlaySync) onPlaySync();
+              }}
+              onPause={() => {
+                 setIsPlaying(false);
+                 if (onPauseSync) onPauseSync();
+              }}
+              onEnded={() => {
+                setIsPlaying(false);
+                if (onPauseSync) onPauseSync();
+                if (autoPlayNext && hasNextEpisode && onAutoNext && !showAutoNext) {
+                  onAutoNext();
+                }
+              }}
+            />
+            {doubleTapFeedback.show && doubleTapFeedback.type === "left" && (
+              <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-black/30 flex flex-col items-center justify-center pointer-events-none z-30 animate-fade-in rounded-l-lg">
+                <div className="bg-zinc-950/70 border border-zinc-800/50 p-3.5 rounded-full flex flex-col items-center justify-center backdrop-blur-md">
+                  <svg className="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-white mt-1 uppercase tracking-wider">-10s</span>
+                </div>
+              </div>
+            )}
+            {doubleTapFeedback.show && doubleTapFeedback.type === "right" && (
+              <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-black/30 flex flex-col items-center justify-center pointer-events-none z-30 animate-fade-in rounded-r-lg">
+                <div className="bg-zinc-950/70 border border-zinc-800/50 p-3.5 rounded-full flex flex-col items-center justify-center backdrop-blur-md">
+                  <svg className="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-white mt-1 uppercase tracking-wider">+10s</span>
+                </div>
+              </div>
+            )}
+          </>
         ) : embedUrl ? (
           <iframe
             src={embedUrl}
@@ -759,11 +881,12 @@ export default function VideoPlayer({
                   <input
                     type="range"
                     min="0"
-                    max="1"
+                    max="2"
                     step="0.1"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w-20 h-1 bg-zinc-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:bg-zinc-300 [&::-webkit-slider-thumb]:rounded-full"
+                    className={`w-20 h-1 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full ${volume > 1 ? "bg-red-500/50 [&::-webkit-slider-thumb]:bg-red-500" : "bg-zinc-600 [&::-webkit-slider-thumb]:bg-zinc-300"}`}
+                    title={volume > 1 ? `Âm lượng khuếch đại: ${Math.round(volume * 100)}%` : `Âm lượng: ${Math.round(volume * 100)}%`}
                   />
                 </div>
               </div>
