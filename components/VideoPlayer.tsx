@@ -41,11 +41,6 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    setIsMobile(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-  }, []);
 
   // Web Audio API for Volume Boost (200%) & Distortion Reduction
   const audioContextRef = useRef<any>(null);
@@ -106,6 +101,31 @@ export default function VideoPlayer({
       isMountedRef.current = false;
     };
   }, []);
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+  }, []);
+
+  const preMuteVolumeRef = useRef(1);
+
+  const applyVolume = (vol: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    if (vol <= 1) {
+      video.volume = vol;
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 1;
+      }
+    } else {
+      video.volume = 1;
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = vol;
+      }
+    }
+    setVolume(vol);
+  };
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -199,7 +219,7 @@ export default function VideoPlayer({
 
   // Load saved playback progress
   useEffect(() => {
-    if (!videoUrl || isWatchTogether) return;
+    if (!videoUrl) return;
     try {
       const key = `playback_progress_${videoUrl}`;
       const saved = localStorage.getItem(key);
@@ -231,7 +251,7 @@ export default function VideoPlayer({
     }
     setSavedTime(null);
     setShowResumePrompt(false);
-  }, [videoUrl, videoRef, isWatchTogether]);
+  }, [videoUrl, videoRef]);
 
   // Prefetch next episode manifest when 90% through current video
   useEffect(() => {
@@ -280,9 +300,7 @@ export default function VideoPlayer({
       
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (isMountedRef.current) {
-          if (!isWatchTogether) {
-            video.play().catch(() => {});
-          }
+          video.play().catch(() => {});
         }
       });
       
@@ -305,9 +323,7 @@ export default function VideoPlayer({
       video.src = videoUrl;
       playVideo = () => {
         if (isMountedRef.current) {
-          if (!isWatchTogether) {
-            video.play().catch(() => {});
-          }
+          video.play().catch(() => {});
         }
       };
       video.addEventListener("loadedmetadata", playVideo);
@@ -348,15 +364,9 @@ export default function VideoPlayer({
       if (video.paused) {
         setShowControls(true);
         if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-        if (onPauseSync) onPauseSync();
       } else {
         resetControlsTimer();
-        if (onPlaySync) onPlaySync();
       }
-    };
-
-    const onSeeked = () => {
-      if (onSeekSync) onSeekSync(video.currentTime);
     };
 
     const onWaiting = () => {
@@ -369,21 +379,19 @@ export default function VideoPlayer({
 
     video.addEventListener("play", onPlayStateChange);
     video.addEventListener("pause", onPlayStateChange);
-    video.addEventListener("seeked", onSeeked);
     video.addEventListener("waiting", onWaiting);
     video.addEventListener("playing", onPlaying);
 
     return () => {
       video.removeEventListener("play", onPlayStateChange);
       video.removeEventListener("pause", onPlayStateChange);
-      video.removeEventListener("seeked", onSeeked);
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("playing", onPlaying);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
     };
-  }, [videoRef, onBuffering, onPlaySync, onPauseSync, onSeekSync]);
+  }, [videoRef, onBuffering]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -425,8 +433,12 @@ export default function VideoPlayer({
 
     if (video.paused) {
       video.play().catch(() => {});
+      setIsPlaying(true);
+      if (onPlaySync) onPlaySync();
     } else {
       video.pause();
+      setIsPlaying(false);
+      if (onPauseSync) onPauseSync();
     }
   };
 
@@ -454,51 +466,13 @@ export default function VideoPlayer({
     const time = parseFloat(e.target.value);
     video.currentTime = time;
     setCurrentTime(time);
+    if (onSeekSync) onSeekSync(time);
     resetControlsTimer();
-  };
-
-  const prevVolumeRef = useRef(1);
-
-  const updateVolume = (vol: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (vol <= 0.01) {
-      video.volume = 0;
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 1;
-      }
-      setVolume(0);
-    } else if (vol <= 1) {
-      video.volume = vol;
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 1;
-      }
-      setVolume(vol);
-    } else {
-      video.volume = 1;
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = vol;
-      }
-      setVolume(vol);
-    }
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (volume > 0) {
-      prevVolumeRef.current = volume;
-      updateVolume(0);
-    } else {
-      updateVolume(prevVolumeRef.current || 1);
-    }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const vol = parseFloat(e.target.value);
-    updateVolume(vol);
+    applyVolume(vol);
     resetControlsTimer();
   };
 
@@ -650,13 +624,13 @@ export default function VideoPlayer({
         case "arrowup":
           e.preventDefault();
           const newVolUp = Math.min(2, volume + 0.1);
-          updateVolume(newVolUp);
+          applyVolume(newVolUp);
           resetControlsTimer();
           break;
         case "arrowdown":
           e.preventDefault();
           const newVolDown = Math.max(0, volume - 0.1);
-          updateVolume(newVolDown);
+          applyVolume(newVolDown);
           resetControlsTimer();
           break;
         case "f":
@@ -665,7 +639,12 @@ export default function VideoPlayer({
           break;
         case "m":
           e.preventDefault();
-          toggleMute();
+          if (volume > 0) {
+            preMuteVolumeRef.current = volume;
+            applyVolume(0);
+          } else {
+            applyVolume(preMuteVolumeRef.current);
+          }
           resetControlsTimer();
           break;
         default:
@@ -688,7 +667,7 @@ export default function VideoPlayer({
     <div className="relative w-full h-full max-h-full flex items-center justify-center z-10">
 
       {/* Ambient Light Canvas (Glow) */}
-      {ambientActive && videoUrl && (
+      {ambientActive && videoUrl && !isMobile && (
         <canvas
           ref={canvasRef}
           width="16"
@@ -880,7 +859,7 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Custom Controls - only show for video element */}
+        {/* Custom Controls - only show for video element on desktop */}
         {videoUrl && !isMobile && (
           <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 z-20 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
             {/* Progress Bar */}

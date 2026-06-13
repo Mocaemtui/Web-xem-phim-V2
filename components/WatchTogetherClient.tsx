@@ -42,7 +42,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isChatHidden, setIsChatHidden] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
-  
+
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   useEffect(() => {
     setIsMobileDevice(/Mobi|Android|iPhone/i.test(navigator.userAgent));
@@ -225,51 +225,31 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   const pendingSyncTimeRef = useRef<number | null>(null);
   const pendingSyncPlayingRef = useRef<boolean | null>(null);
-  const hasRequestedSyncAfterEpisodeChange = useRef(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const applyPendingSync = () => {
+    const handleLoadedMetadata = () => {
       if (pendingSyncTimeRef.current !== null) {
         isReceivingEvent.current = true;
         video.currentTime = pendingSyncTimeRef.current;
-        
-        const targetPlaying = pendingSyncPlayingRef.current;
+        if (pendingSyncPlayingRef.current) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
         pendingSyncTimeRef.current = null;
         pendingSyncPlayingRef.current = null;
-
-        setTimeout(() => {
-          if (targetPlaying) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-          
-          setTimeout(() => {
-            isReceivingEvent.current = false;
-          }, 1500);
-        }, 300);
-      } else if (!hasSynced.current && !hasRequestedSyncAfterEpisodeChange.current) {
-        hasRequestedSyncAfterEpisodeChange.current = true;
-        setTimeout(() => {
-          isReceivingEvent.current = false;
-          triggerRequestSync();
-        }, 800);
+        setTimeout(() => { isReceivingEvent.current = false; }, 500);
       }
     };
 
-    video.addEventListener("loadedmetadata", applyPendingSync);
-    video.addEventListener("loadeddata", applyPendingSync);
-    video.addEventListener("canplay", applyPendingSync);
-
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
     return () => {
-      video.removeEventListener("loadedmetadata", applyPendingSync);
-      video.removeEventListener("loadeddata", applyPendingSync);
-      video.removeEventListener("canplay", applyPendingSync);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [videoRef]);
+  }, [currentEpisode, videoRef]);
   
   // Mọi người đều là Host
   const {
@@ -426,7 +406,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       if (isEpisodeDifferent) {
         // Store the target time/state to apply once the new episode manifest is loaded
-        isReceivingEvent.current = true;
         pendingSyncTimeRef.current = data.time;
         pendingSyncPlayingRef.current = data.isPlaying;
       } else {
@@ -445,9 +424,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     };
 
     onChangeEpisodeRef.current = (serverIndex, episodeIndex) => {
-      hasSynced.current = false;
-      hasRequestedSyncAfterEpisodeChange.current = false;
-      isReceivingEvent.current = true;
       setCurrentServerIndex(serverIndex);
       setCurrentEpisodeIndex(episodeIndex);
     };
@@ -455,7 +431,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   // Sync state for single watchers (hosts)
   useEffect(() => {
-    if (watchers.length === 1 && isJoined) {
+    if (watchers.length <= 1 && isJoined) {
       hasSynced.current = true;
     }
   }, [watchers, isJoined]);
@@ -499,31 +475,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     }
   }, [isJoined, currentEpisode, roomId]);
 
-  const handleSelectEpisode = (idx: number) => {
-    hasSynced.current = true;
-    pendingSyncTimeRef.current = 0;
-    pendingSyncPlayingRef.current = true;
-    isReceivingEvent.current = true;
-    setCurrentEpisodeIndex(idx);
-    triggerChangeEpisode(currentServerIndex, idx);
-  };
-
-  const handleSelectServer = (idx: number) => {
-    hasSynced.current = true;
-    pendingSyncTimeRef.current = 0;
-    pendingSyncPlayingRef.current = true;
-    isReceivingEvent.current = true;
-    setCurrentServerIndex(idx);
-    setCurrentEpisodeIndex(0);
-    triggerChangeEpisode(idx, 0);
-    if (typeof window !== "undefined") {
-      const preferred = episodes[idx]?.server_name;
-      if (preferred) {
-        localStorage.setItem("preferred_server_name", preferred);
-      }
-    }
-  };
-
   const handleHostSyncConfirm = () => {
     if (hostSavedTime) {
       if (videoRef.current) {
@@ -557,23 +508,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   if (isMobileDevice) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
-          <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-3">Xem chung không hỗ trợ trên điện thoại</h2>
-          <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-            Tính năng phòng xem chung (Watch Together) hiện tại chỉ hỗ trợ tốt nhất trên máy tính (PC / Laptop). Vui lòng chuyển sang máy tính để tham gia cùng bạn bè.
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Không hỗ trợ di động</h1>
+          <p className="text-zinc-300 text-sm mb-6 leading-relaxed font-medium">
+            Tính năng Xem Chung không hỗ trợ trên các thiết bị di động. Vui lòng sử dụng máy tính (PC / Laptop) để tham gia xem phim cùng bạn bè.
           </p>
-          <a
-            href="/"
-            className="inline-block bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all"
-          >
-            Quay lại trang chủ
-          </a>
         </div>
       </div>
     );
@@ -784,7 +724,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 onAutoNext={() => {
                   if (currentEpisodeIndex < serverData.length - 1) {
                     const nextIdx = currentEpisodeIndex + 1;
-                    handleSelectEpisode(nextIdx);
+                    setCurrentEpisodeIndex(nextIdx);
+                    triggerChangeEpisode(currentServerIndex, nextIdx);
                   }
                 }}
               />
@@ -861,8 +802,21 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                       episodes={episodes}
                       currentServerIndex={currentServerIndex}
                       currentEpisodeIndex={currentEpisodeIndex}
-                      onSelectEpisode={handleSelectEpisode}
-                      onSelectServer={handleSelectServer}
+                      onSelectEpisode={(idx) => {
+                        setCurrentEpisodeIndex(idx);
+                        triggerChangeEpisode(currentServerIndex, idx);
+                      }}
+                      onSelectServer={(idx) => {
+                        setCurrentServerIndex(idx);
+                        setCurrentEpisodeIndex(0);
+                        triggerChangeEpisode(idx, 0);
+                        if (typeof window !== "undefined") {
+                          const preferred = episodes[idx]?.server_name;
+                          if (preferred) {
+                            localStorage.setItem("preferred_server_name", preferred);
+                          }
+                        }
+                      }}
                     />
                   )}
                 </div>
@@ -1025,15 +979,28 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {!isTheaterMode && (
         <div className="hidden md:block w-full shrink-0 px-6 py-6 bg-zinc-950/60 border-t border-zinc-900/50 backdrop-blur-md relative z-20">
           <h1 className="text-xl md:text-2xl font-bold text-white mb-4">
-            {movie.name} - Tập {currentEpisodeIndex + 1}
+            {movie.name} - {currentServer?.server_name} - {currentEpisode?.name.toLowerCase().includes("tập") ? currentEpisode.name : `Tập ${currentEpisodeIndex + 1}`}
           </h1>
           {episodes.length > 0 && serverData.length > 0 && (
             <EpisodeSelector
               episodes={episodes}
               currentServerIndex={currentServerIndex}
               currentEpisodeIndex={currentEpisodeIndex}
-                      onSelectEpisode={handleSelectEpisode}
-                      onSelectServer={handleSelectServer}
+              onSelectEpisode={(idx) => {
+                setCurrentEpisodeIndex(idx);
+                triggerChangeEpisode(currentServerIndex, idx);
+              }}
+              onSelectServer={(idx) => {
+                setCurrentServerIndex(idx);
+                setCurrentEpisodeIndex(0);
+                triggerChangeEpisode(idx, 0);
+                if (typeof window !== "undefined") {
+                  const preferred = episodes[idx]?.server_name;
+                  if (preferred) {
+                    localStorage.setItem("preferred_server_name", preferred);
+                  }
+                }
+              }}
             />
           )}
         </div>
