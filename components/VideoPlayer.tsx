@@ -588,9 +588,49 @@ export default function VideoPlayer({
           <video
             ref={videoRef}
             poster={poster}
-            crossOrigin="anonymous"
-            playsInline
-            onClick={togglePlay}
+            onTouchStart={(e) => {
+              // Double Tap to Seek on Mobile
+              const touch = e.touches[0];
+              const video = videoRef.current;
+              if (!video) return;
+
+              const rect = e.currentTarget.getBoundingClientRect();
+              const touchX = touch.clientX - rect.left;
+              const width = rect.width;
+              
+              const now = Date.now();
+              const DOUBLE_TAP_DELAY = 300;
+              
+              // Custom handling for double tap
+              const lastTap = (video as any).lastTap || 0;
+              if (now - lastTap < DOUBLE_TAP_DELAY) {
+                e.preventDefault();
+                if (touchX < width / 2) {
+                  // Double tap left side -> seek back 10s
+                  const newTime = Math.max(0, video.currentTime - 10);
+                  video.currentTime = newTime;
+                  setCurrentTime(newTime);
+                  if (onSeekSync) onSeekSync(newTime);
+                } else {
+                  // Double tap right side -> seek forward 10s
+                  const newTime = Math.min(video.duration || 0, video.currentTime + 10);
+                  video.currentTime = newTime;
+                  setCurrentTime(newTime);
+                  if (onSeekSync) onSeekSync(newTime);
+                }
+                resetControlsTimer();
+                (video as any).lastTap = 0; // reset
+              } else {
+                (video as any).lastTap = now;
+              }
+            }}
+            onClick={(e) => {
+              // On desktop, regular click triggers play/pause. On mobile, handled smoothly.
+              const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+              if (!isMobile) {
+                togglePlay();
+              }
+            }}
             className="max-w-full max-h-full aspect-video relative cursor-pointer"
             style={{
               zIndex: 2,

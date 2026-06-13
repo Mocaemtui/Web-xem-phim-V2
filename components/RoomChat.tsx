@@ -83,12 +83,15 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         
         {/* Typing Indicator */}
         {typingUsers.length > 0 && (
-          <div className="flex items-center gap-2 text-zinc-500 text-sm italic">
-            <span>{typingUsers.join(', ')} đang gõ</span>
-            <div className="flex gap-1">
-              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+          <div className="flex items-center gap-2 text-zinc-500 text-xs mt-2 transition-all">
+            <div className="bg-zinc-900/50 px-3 py-2 rounded-2xl rounded-tl-none flex items-center gap-1.5 border border-zinc-800/10">
+              <span className="font-semibold text-zinc-400">{typingUsers[0]}</span>
+              <span className="text-zinc-500 text-[10px]">đang gõ</span>
+              <div className="flex gap-1 items-center ml-1">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
             </div>
           </div>
         )}
