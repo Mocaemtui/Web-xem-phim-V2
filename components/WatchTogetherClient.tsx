@@ -26,12 +26,67 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
   const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "episodes" | "watchers">("chat");
   const [isTheaterMode, setIsTheaterMode] = useState(false);
+  const [chatWidth, setChatWidth] = useState(384);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const ambientCanvasRef = useRef<HTMLCanvasElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
+  const isResizing = useRef(false);
   const currentServerIndexRef = useRef(currentServerIndex);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing.current) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth > 240 && newWidth < window.innerWidth * 0.6) {
+      setChatWidth(newWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    isResizing.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+
+  // Sync ambient light canvas
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = ambientCanvasRef.current;
+    if (!video || !canvas || !isJoined) return;
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: false });
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let lastDrawTime = 0;
+
+    const drawFrame = (now: number) => {
+      if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
+        try {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          lastDrawTime = now;
+        } catch (err) {
+          // Ignore CORS
+        }
+      }
+      animationFrameId = requestAnimationFrame(drawFrame);
+    };
+
+    animationFrameId = requestAnimationFrame(drawFrame);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isJoined]);
 
   useEffect(() => {
     if (isTheaterMode) {
@@ -204,7 +259,16 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div ref={containerRef} className="h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+    <div ref={containerRef} className="relative h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+      {/* Global Background Ambient Glow Canvas */}
+      <canvas
+        ref={ambientCanvasRef}
+        width="16"
+        height="9"
+        className="absolute inset-0 w-full h-full blur-[140px] opacity-45 pointer-events-none transition-all duration-700"
+        style={{ zIndex: 0 }}
+      />
+
       {isTheaterMode && (
         <style dangerouslySetInnerHTML={{__html: `
           header { display: none !important; }
@@ -216,10 +280,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Left Area: Video Player & Controls */}
       <div 
-        className={`flex-1 flex flex-col transition-all duration-300 group/theater relative ${
+        className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
           isTheaterMode 
-            ? "h-screen w-full p-0 bg-black overflow-hidden justify-center items-center" 
-            : "h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6"
+            ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-center" 
+            : "h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6 bg-transparent"
         }`}
         onDoubleClick={() => setIsTheaterMode(prev => !prev)}
       >
@@ -433,8 +497,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         )}
       </div>
 
+      {/* Resizable Divider line */}
+      <div 
+        onMouseDown={startResizing} 
+        className="hidden md:block w-1 hover:w-1.5 bg-zinc-800/40 hover:bg-blue-600/50 cursor-col-resize transition-all duration-150 h-screen shrink-0 z-40 relative border-l border-r border-zinc-900/10" 
+      />
+
       {/* Right Area: Desktop Sidebar */}
-      <div className="hidden md:flex w-80 lg:w-96 border-l border-zinc-800 bg-zinc-950 flex-col h-screen shrink-0">
+      <div 
+        className="hidden md:flex border-l border-zinc-850/35 bg-zinc-950/30 backdrop-blur-xl flex-col h-screen shrink-0 z-10"
+        style={{ width: `${chatWidth}px` }}
+      >
+
         <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
