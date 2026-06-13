@@ -101,6 +101,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
       <div className="p-3 bg-zinc-950/20 backdrop-blur-sm border-t border-zinc-900/30">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
+            id="chat-input-field"
             type="text"
             value={text}
             onChange={handleChange}

@@ -669,7 +669,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </div>
 
             {/* Mobile Tab Content Container */}
-            <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border-0 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border-0 p-3 flex flex-col h-[calc(100vh-56.25vw-120px)] min-h-[280px] ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
               {activeMobileTab === "chat" && (
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Emojis Reaction bar inside mobile chat tab */}
@@ -756,11 +756,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-30 relative transition-all duration-300 ${
-          isChatHidden ? "w-0 p-0 overflow-hidden" : "p-3 md:p-4 gap-3 overflow-visible"
+        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-all duration-500 ease-in-out ${
+          isChatHidden ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
         style={{ 
           width: isChatHidden ? "0px" : (isTheaterMode ? "260px" : `${chatWidth}px`), 
+          padding: isChatHidden ? "0px" : "12px",
+          gap: isChatHidden ? "0px" : "12px",
+          overflow: "hidden",
+          transitionProperty: "width, padding, gap, opacity",
           backgroundColor: "transparent" 
         }}
       >
@@ -934,7 +938,19 @@ function KeyboardAndTheaterHandler({
         setIsTheaterMode(prev => !prev);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        setIsChatHidden(prev => !prev);
+        setIsChatHidden(prev => {
+          const nextState = !prev;
+          if (!nextState) {
+            // Tự động focus ngay khi mở chat
+            setTimeout(() => {
+              const inputEl = document.getElementById("chat-input-field");
+              if (inputEl) {
+                inputEl.focus();
+              }
+            }, 100);
+          }
+          return nextState;
+        });
       }
     };
     document.addEventListener("keydown", handleKeyDown, { capture: true });
