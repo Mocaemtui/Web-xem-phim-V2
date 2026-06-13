@@ -10,7 +10,6 @@ const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
   ssr: false,
   loading: () => (
     <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
-      <div className="text-zinc-500 animate-pulse">Đang khởi tạo trình phát video...</div>
     </div>
   )
 });
@@ -20,7 +19,10 @@ interface WatchPageClientProps {
   posterUrl: string;
 }
 
+import { useRouter } from "next/navigation";
+
 export default function WatchPageClient({ movie, posterUrl }: WatchPageClientProps) {
+  const router = useRouter();
   const [episodes, setEpisodes] = useState(movie.episodes || []);
   
   const [currentServerIndex, setCurrentServerIndex] = useState(() => {
@@ -180,14 +182,58 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     }
   };
 
+  const isSingleEpisode = currentEpisode?.name.toLowerCase().includes("full") || (episodes.length > 0 && serverData.length === 1 && currentEpisode?.name === "1");
+
   return (
     <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
-      <div className="container mx-auto px-4 py-8">
+      {/* Top Bar with Back Button */}
+      <div className="fixed top-0 left-0 right-0 z-50 p-4 pointer-events-none flex items-start">
+        <button 
+          onClick={() => router.back()}
+          className="pointer-events-auto bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-md transition-colors border border-white/10"
+          title="Quay lại"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 mt-12 md:mt-0">
         
-        {/* Movie Info (Moved to top) */}
+        {/* Video Player (Moved to very top below back button) */}
+        <div className="mb-8 relative z-10 w-full aspect-video">
+          {currentEpisode ? (
+            <VideoPlayer
+              key={`${currentServerIndex}-${currentEpisodeIndex}`}
+              poster={posterUrl}
+              videoUrl={currentEpisode.link_m3u8}
+              embedUrl={currentEpisode.link_embed}
+              hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
+              nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
+              onAutoNext={() => {
+                if (currentEpisodeIndex < serverData.length - 1) {
+                  setCurrentEpisodeIndex((prev) => prev + 1);
+                }
+              }}
+            />
+          ) : (
+            <div className="relative w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+              <div className="text-center p-8">
+                <p className="text-zinc-400 text-lg mb-2">Không tìm thấy link phim</p>
+                <p className="text-zinc-500 text-sm">Phim này hiện không có sẵn để xem</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Movie Info (Below Video Player) */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-            {movie.name} - {currentEpisode?.name.toLowerCase().includes("tập") ? currentEpisode.name : `Tập ${currentEpisode?.name || currentEpisodeIndex + 1}`}
+            {isSingleEpisode 
+              ? movie.name 
+              : `${movie.name} - ${currentEpisode?.name.toLowerCase().includes("tập") ? currentEpisode.name : `Tập ${currentEpisode?.name || currentEpisodeIndex + 1}`}`
+            }
           </h1>
           {movie.origin_name && (
             <p className="text-lg text-zinc-400 mb-4">{movie.origin_name}</p>
@@ -234,32 +280,6 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
               className="text-zinc-400 text-sm leading-relaxed max-w-4xl"
               dangerouslySetInnerHTML={{ __html: movie.content }}
             />
-          )}
-        </div>
-
-        {/* Video Player */}
-        <div className="mb-8 relative z-10 w-full aspect-video">
-          {currentEpisode ? (
-            <VideoPlayer
-              key={`${currentServerIndex}-${currentEpisodeIndex}`}
-              poster={posterUrl}
-              videoUrl={currentEpisode.link_m3u8}
-              embedUrl={currentEpisode.link_embed}
-              hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
-              nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
-              onAutoNext={() => {
-                if (currentEpisodeIndex < serverData.length - 1) {
-                  setCurrentEpisodeIndex((prev) => prev + 1);
-                }
-              }}
-            />
-          ) : (
-            <div className="relative w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
-              <div className="text-center p-8">
-                <p className="text-zinc-400 text-lg mb-2">Không tìm thấy link phim</p>
-                <p className="text-zinc-500 text-sm">Phim này hiện không có sẵn để xem</p>
-              </div>
-            </div>
           )}
         </div>
 

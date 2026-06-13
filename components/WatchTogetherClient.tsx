@@ -521,7 +521,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   if (!isJoined) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="fixed inset-0 h-screen bg-zinc-950 flex items-center justify-center p-4 overflow-hidden z-50">
         <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl max-w-md w-full">
           <h1 className="text-2xl font-bold text-white mb-2 text-center">Phòng Xem Chung</h1>
           <p className="text-zinc-400 text-sm text-center mb-6">Phim: {movie.name}</p>
@@ -732,7 +732,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </>
           ) : (
             <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
-              <p className="text-zinc-400">Không tìm thấy link phim</p>
             </div>
           )}
         </div>
