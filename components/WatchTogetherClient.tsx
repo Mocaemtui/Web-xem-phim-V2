@@ -47,11 +47,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const ambientCanvasRef = useRef<HTMLCanvasElement>(null);
-  const chatAmbientCanvasRef = useRef<HTMLCanvasElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
   const isResizing = useRef(false);
+  const hasSynced = useRef(false);
   const currentServerIndexRef = useRef(currentServerIndex);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
+
 
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -82,16 +83,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     const drawFrame = (now: number) => {
       const video = videoRef.current;
       const canvas1 = ambientCanvasRef.current;
-      const canvas2 = chatAmbientCanvasRef.current;
 
       if (video && isJoined) {
         const ctx1 = canvas1 ? canvas1.getContext("2d", { willReadFrequently: false }) : null;
-        const ctx2 = canvas2 ? canvas2.getContext("2d", { willReadFrequently: false }) : null;
 
         if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
           try {
             if (canvas1 && ctx1) ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
-            if (canvas2 && ctx2) ctx2.drawImage(video, 0, 0, canvas2.width, canvas2.height);
             lastDrawTime = now;
           } catch (err) {
             // Ignore CORS
@@ -107,6 +105,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       cancelAnimationFrame(animationFrameId);
     };
   }, [isJoined, ambientActive]);
+
 
 
 
@@ -193,6 +192,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
     // Khi nhận được phản hồi đồng bộ từ người khác
     onSyncResponseRef.current = (data) => {
+      hasSynced.current = true;
       if (data.serverIndex !== undefined && data.episodeIndex !== undefined) {
         setCurrentServerIndex(data.serverIndex);
         setCurrentEpisodeIndex(data.episodeIndex);
@@ -215,6 +215,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     };
   }, [onPlayRef, onPauseRef, onSeekRef, onRequestSyncRef, onSyncResponseRef, onChangeEpisodeRef]);
 
+  // Sync state for single watchers (hosts)
+  useEffect(() => {
+    if (watchers.length <= 1 && isJoined) {
+      hasSynced.current = true;
+    }
+  }, [watchers, isJoined]);
+
   // Khi vừa vào phòng, tự động xin đồng bộ với những người đang xem (nếu có)
   useEffect(() => {
     if (isJoined) {
@@ -223,6 +230,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       }, 1000);
     }
   }, [isJoined]);
+
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,14 +357,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 videoUrl={currentEpisode.link_m3u8}
                 nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
                 onPlaySync={() => {
-                  if (!isReceivingEvent.current && videoRef.current) triggerPlay(videoRef.current.currentTime);
+                  if (hasSynced.current && !isReceivingEvent.current && videoRef.current) triggerPlay(videoRef.current.currentTime);
                 }}
                 onPauseSync={() => {
-                  if (!isReceivingEvent.current) triggerPause();
+                  if (hasSynced.current && !isReceivingEvent.current) triggerPause();
                 }}
                 onSeekSync={(time) => {
-                  if (!isReceivingEvent.current) triggerSeek(time);
+                  if (hasSynced.current && !isReceivingEvent.current) triggerSeek(time);
                 }}
+
                 hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
                 onAutoNext={() => {
                   if (currentEpisodeIndex < serverData.length - 1) {
@@ -539,16 +548,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         className="hidden md:flex bg-transparent flex-col h-screen shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
         style={{ width: `${chatWidth}px` }}
       >
-        {/* Chat Area Ambient Canvas */}
-        {ambientActive && (
-          <canvas
-            ref={chatAmbientCanvasRef}
-            width="16"
-            height="9"
-            className="absolute inset-0 w-full h-full blur-[110px] opacity-50 pointer-events-none transition-all duration-700"
-            style={{ zIndex: 0 }}
-          />
-        )}
+
 
         <div className="p-2.5 bg-zinc-950/10 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
           <div className="flex items-center gap-2">
