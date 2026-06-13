@@ -27,6 +27,21 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
 
   useEffect(() => {
     if (!isRestored) {
+      // Check query parameters first (e.g. ?tap=3)
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const tapParam = params.get("tap");
+        if (tapParam) {
+          const tapIdx = parseInt(tapParam, 10) - 1;
+          if (movie.episodes?.[0]?.server_data?.[tapIdx]) {
+            setCurrentServerIndex(0);
+            setCurrentEpisodeIndex(tapIdx);
+            setIsRestored(true);
+            return;
+          }
+        }
+      }
+
       const history = getWatchHistory();
       const item = history.find(i => i.slug === movie.slug);
       if (item) {

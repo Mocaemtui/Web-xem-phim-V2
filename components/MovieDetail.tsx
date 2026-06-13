@@ -247,7 +247,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Xem phim
+                      Xem ngay tập mới nhất
                     </Link>
                   )}
                   {movie.slug && (
@@ -298,6 +298,25 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
                 </div>
               )}
             </div>
+
+            {/* Episode Selector for Series Movies directly in Detail Page */}
+            {movie.episodes && movie.episodes.length > 0 && (
+              <div className="mt-8 border-t border-zinc-900 pt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Danh sách tập phim</h3>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                  {movie.episodes[0].server_data?.map((episode, idx) => (
+                    <Link
+                      key={`${episode.slug}-${idx}`}
+                      href={`/xem-phim/${movie.slug}?tap=${idx + 1}`}
+                      className="px-3 py-2 bg-zinc-900 hover:bg-blue-600 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors text-center cursor-pointer"
+                    >
+                      {episode.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>

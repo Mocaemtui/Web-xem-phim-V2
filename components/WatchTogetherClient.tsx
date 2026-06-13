@@ -468,12 +468,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                   setShowWatchers(false);
                   setShowEmojis(false);
                 }}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${
-                  unreadCount > 0 ? "bg-yellow-600/90 border-yellow-500 text-white" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
-                }`}
+                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
                 title="Hiện cuộc trò chuyện"
               >
-                <Eye className={`w-3.5 h-3.5 ${unreadCount > 0 ? "text-yellow-300" : ""}`} />
+                <Eye className="w-3.5 h-3.5" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] border border-zinc-950 animate-pulse">
                     {unreadCount}
@@ -725,10 +723,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
               setShowWatchers(false);
               setShowEmojis(false);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isChatHidden ? "bg-yellow-600/90 border-yellow-500 text-white" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isChatHidden ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
             title={isChatHidden ? "Hiện cuộc trò chuyện" : "Tạm ẩn cuộc trò chuyện"}
           >
-            {isChatHidden ? <EyeOff className="w-3.5 h-3.5 text-yellow-300" /> : <Eye className="w-3.5 h-3.5" />}
+            {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </button>
         </div>
 
