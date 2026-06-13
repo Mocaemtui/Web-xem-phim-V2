@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { MovieDetail } from "@/types/api";
-import { Users, Copy, Check, RefreshCw, Smile } from "lucide-react";
+import { Users, Copy, Check, RefreshCw, Smile, Eye, EyeOff, MessageSquare } from "lucide-react";
 import EpisodeSelector from "@/components/EpisodeSelector";
 import { useWatchTogether } from "@/hooks/useWatchTogether";
 
@@ -30,6 +30,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [ambientActive, setAmbientActive] = useState(true);
   const [showWatchers, setShowWatchers] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [isChatHidden, setIsChatHidden] = useState(false);
+  const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -153,6 +155,24 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     onSyncResponseRef,
     onChangeEpisodeRef,
   } = useWatchTogether(isJoined ? roomId : "", username, true);
+
+  const lastMessageCountRef = useRef(0);
+
+  useEffect(() => {
+    lastMessageCountRef.current = messages.length;
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > lastMessageCountRef.current) {
+      const lastMsg = messages[messages.length - 1];
+      if (!lastMsg.isSystem && isChatHidden) {
+        setIsChatHidden(false);
+        setNewMessageNotification(`Tin nhắn mới từ ${lastMsg.sender}: "${lastMsg.text}"`);
+        setTimeout(() => setNewMessageNotification(null), 4000);
+      }
+      lastMessageCountRef.current = messages.length;
+    }
+  }, [messages, isChatHidden]);
 
   // Bind remote events to local video player
   useEffect(() => {
@@ -601,10 +621,23 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             )}
           </div>
 
+          {/* Hide/Show Chat Toggle Button */}
+          <button
+            onClick={() => {
+              setIsChatHidden(prev => !prev);
+              setShowWatchers(false);
+              setShowEmojis(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isChatHidden ? "bg-zinc-800/80 border-zinc-700 text-yellow-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+            title={isChatHidden ? "Hiện cuộc trò chuyện" : "Tạm ẩn cuộc trò chuyện"}
+          >
+            {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </button>
+
         </div>
 
 
-        <div className="flex-1 overflow-hidden p-0 relative z-10">
+        <div className={`flex-1 overflow-hidden p-0 relative z-10 transition-opacity duration-300 ${isChatHidden ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <RoomChat 
             messages={messages} 
             typingUsers={typingUsers}
@@ -636,6 +669,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
               }}
             />
           )}
+        </div>
+      )}
+    {/* New Message Toast Notification Alert */}
+      {newMessageNotification && (
+        <div className="fixed bottom-24 right-6 bg-blue-600/90 backdrop-blur-md text-white border border-blue-500/30 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-xs flex items-center gap-2 animate-bounce">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>{newMessageNotification}</span>
         </div>
       )}
     </div>

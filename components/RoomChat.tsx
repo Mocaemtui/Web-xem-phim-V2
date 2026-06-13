@@ -49,9 +49,6 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden border-0 shadow-none" style={{ backgroundColor: "transparent" }}>
-      <div className="p-4 border-b border-zinc-900/10 bg-transparent">
-        <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
-      </div>
       
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
         {messages.length === 0 ? (
@@ -109,7 +106,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
           <button
             type="submit"
             disabled={!text.trim()}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="md:hidden bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Gửi
           </button>
