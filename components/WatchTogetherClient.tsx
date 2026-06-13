@@ -219,6 +219,14 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           currentServerIndexRef.current,
           currentEpisodeIndexRef.current
         );
+      } else {
+        // Nếu video chưa load xong, gửi thông tin tập phim hiện tại để người mới load tập đó trước
+        triggerSyncResponse(
+          0,
+          false,
+          currentServerIndexRef.current,
+          currentEpisodeIndexRef.current
+        );
       }
     };
 
