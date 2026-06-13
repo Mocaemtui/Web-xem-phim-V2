@@ -24,12 +24,26 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
         const data = await res.json();
         
         if (data && data.items && Array.isArray(data.items)) {
-          // Lọc bỏ những phim đã có từ Ophim/PhimAPI (trùng slug)
-          const existingSlugs = new Set(initialMovies.map(m => m.slug));
+          const getSmartKey = (item: any) => {
+            const originName = item.original_name || item.origin_name || item.name || '';
+            if (!originName) return item.slug;
+            const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
+            // Try to find the year from initialMovies if matching, or fallback to current year
+            return `${normalizedOriginName}-${item.year || new Date().getFullYear()}`;
+          };
+
+          // Build a set of existing smart keys from initialMovies
+          const existingKeys = new Set(initialMovies.map(m => {
+            if (!m.origin_name) return m.slug;
+            const normalizedOriginName = m.origin_name.toLowerCase().replace(/\s+/g, ' ').trim();
+            return `${normalizedOriginName}-${m.year || 'unknown'}`;
+          }));
+          
           const newMovies: Movie[] = [];
           
           for (const item of data.items) {
-            if (!existingSlugs.has(item.slug)) {
+            const itemKey = getSmartKey(item);
+            if (!existingKeys.has(itemKey)) {
               // Map NguonC search item format to our standard Movie format
               newMovies.push({
                 _id: item.id || Math.random().toString(),
@@ -38,9 +52,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
                 origin_name: item.original_name || item.name,
                 poster_url: item.thumb_url || item.poster_url,
                 thumb_url: item.thumb_url || item.poster_url,
-                year: new Date().getFullYear(), // Mặc định nếu không có
+                year: item.year || new Date().getFullYear(),
               });
-              existingSlugs.add(item.slug);
+              existingKeys.add(itemKey);
             }
           }
           

@@ -139,15 +139,25 @@ export async function searchPhim(
 
   const itemsMap = new Map<string, Movie>();
 
+  const getSmartKey = (item: Movie) => {
+    if (!item.origin_name) return item.slug;
+    // Chuẩn hóa tên gốc: viết thường, bỏ khoảng trắng thừa
+    const normalizedOriginName = item.origin_name.toLowerCase().replace(/\s+/g, ' ').trim();
+    return `${normalizedOriginName}-${item.year || 'unknown'}`;
+  };
+
   const addItems = (res: any) => {
+    const processItem = (item: Movie) => {
+      const key = getSmartKey(item);
+      if (!itemsMap.has(key)) {
+        itemsMap.set(key, item);
+      }
+    };
+
     if (res?.data?.items) {
-      res.data.items.forEach((item: Movie) => {
-        if (!itemsMap.has(item.slug)) itemsMap.set(item.slug, item);
-      });
+      res.data.items.forEach(processItem);
     } else if (res?.items) {
-      res.items.forEach((item: Movie) => {
-        if (!itemsMap.has(item.slug)) itemsMap.set(item.slug, item);
-      });
+      res.items.forEach(processItem);
     }
   };
 
@@ -275,13 +285,46 @@ export async function getDanhSach(
 export async function getChiTietPhim(
   slug: string
 ): Promise<ApiResponse<{ item: MovieDetail }> | null> {
-  const [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
+  let [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
     fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.OPHIM.url),
     fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url),
     getChiTietPhimNguonC(slug)
   ]);
 
-  let baseMovie: MovieDetail | null = null;
+  let baseMovie: MovieDetail | null = ophimRes?.data?.item || phimapiRes?.data?.item || nguoncRes || null;
+
+  // --- SMART CROSS-API MATCHING (FALLBACK) ---
+  if (baseMovie) {
+    const originName = baseMovie.origin_name || baseMovie.name;
+    
+    // Fallback tìm PhimAPI nếu không tìm thấy bằng slug
+    if (!phimapiRes?.data?.item && originName) {
+      const searchRes = await fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.PHIMAPI.url);
+      if (searchRes?.data?.items) {
+        const match = searchRes.data.items.find(m => 
+          (m.origin_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
+        );
+        if (match && match.slug !== slug) {
+          phimapiRes = await fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url);
+        }
+      }
+    }
+
+    // Fallback tìm Ophim nếu không tìm thấy bằng slug
+    if (!ophimRes?.data?.item && originName) {
+      const searchRes = await fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.OPHIM.url);
+      if (searchRes?.data?.items) {
+        const match = searchRes.data.items.find(m => 
+          (m.origin_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
+        );
+        if (match && match.slug !== slug) {
+          ophimRes = await fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.OPHIM.url);
+        }
+      }
+    }
+  }
+  // -------------------------------------------
+
   const allEpisodes: any[] = [];
 
   if (ophimRes?.data?.item) {

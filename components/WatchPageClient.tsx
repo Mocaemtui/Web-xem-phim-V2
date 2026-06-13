@@ -58,9 +58,28 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   useEffect(() => {
     const fetchNguonC = async () => {
       try {
-        const res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
-        if (!res.ok) return;
-        const data = await res.json();
+        let res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
+        let data = res.ok ? await res.json() : null;
+
+        // --- SMART CROSS-API MATCHING (FALLBACK) ---
+        // Nếu NguonC không có phim theo slug này, thử tìm theo tên tiếng Anh (origin_name)
+        if (!data?.movie?.episodes) {
+          const originName = movie.origin_name || movie.name;
+          if (originName) {
+            const searchRes = await fetch(`https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(originName)}`);
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              const match = searchData?.items?.find((m: any) => 
+                (m.original_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
+              );
+              if (match && match.slug !== movie.slug) {
+                res = await fetch(`https://phim.nguonc.com/api/film/${match.slug}`);
+                data = res.ok ? await res.json() : null;
+              }
+            }
+          }
+        }
+        // -------------------------------------------
         
         if (data?.movie?.episodes) {
           const nguonCEps = data.movie.episodes.map((epServer: any) => ({
