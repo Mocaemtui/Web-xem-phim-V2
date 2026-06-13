@@ -31,7 +31,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [showWatchers, setShowWatchers] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [isChatHidden, setIsChatHidden] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
 
   useEffect(() => {
@@ -367,11 +366,93 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         )}
 
         {/* Video Player */}
-        <div className={`w-full transition-all ${
+        <div className={`w-full relative transition-all ${
           isTheaterMode 
             ? "h-full max-h-screen flex items-center justify-end p-0 z-40" 
             : "relative z-20 bg-transparent p-0 shrink min-h-0 mb-3 md:mb-6 flex-1 flex items-center justify-center"
         }`}>
+
+          {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden & hovered near top-right) */}
+          {isChatHidden && (
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 group/overlay"
+                 style={{ contentVisibility: "auto" }}>
+              {/* Invisible hover helper to make it easy to trigger */}
+              <div className="absolute -top-4 -right-4 -bottom-4 -left-12 z-[-1] pointer-events-auto" />
+              
+              {/* Watchers Popover (Horizontal Context) */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowWatchers(prev => !prev);
+                    setShowEmojis(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${showWatchers ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{watchers.length}</span>
+                </button>
+
+                {showWatchers && (
+                  <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-3 rounded-lg shadow-2xl z-50 min-w-[180px] max-w-[240px]">
+                    <h4 className="text-[11px] font-semibold text-zinc-400 mb-2 border-b border-zinc-900 pb-1">Người xem ({watchers.length})</h4>
+                    <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
+                      {watchers.map((w) => (
+                        <div key={w.id} className="text-xs text-zinc-300 py-0.5 truncate">
+                          {w.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Emojis Popover (Horizontal Context) */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowEmojis(prev => !prev);
+                    setShowWatchers(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${showEmojis ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                </button>
+
+                {showEmojis && (
+                  <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-2 rounded-lg shadow-2xl z-50 min-w-[200px]">
+                    <div className="grid grid-cols-5 gap-1.5 justify-items-center">
+                      {EMOJIS.map(emoji => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            triggerReaction(emoji);
+                          }}
+                          className="text-lg hover:scale-125 active:scale-95 transition-transform duration-100 cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Restore Chat Button */}
+              <button
+                onClick={() => {
+                  setIsChatHidden(false);
+                  setShowWatchers(false);
+                  setShowEmojis(false);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
+                title="Hiện cuộc trò chuyện"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Hiện Chat</span>
+              </button>
+
+            </div>
+          )}
 
           {currentEpisode ? (
             <>
@@ -555,10 +636,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Right Area: Desktop Sidebar */}
       <div 
         className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-all duration-300 ${
-          isSidebarCollapsed ? "w-0 p-0 overflow-hidden" : "p-3 md:p-4 gap-3 overflow-visible"
+          isChatHidden ? "w-0 p-0 overflow-hidden" : "p-3 md:p-4 gap-3 overflow-visible"
         }`}
         style={{ 
-          width: isSidebarCollapsed ? "0px" : (isChatHidden ? "60px" : (isTheaterMode ? "260px" : `${chatWidth}px`)), 
+          width: isChatHidden ? "0px" : (isTheaterMode ? "260px" : `${chatWidth}px`), 
           backgroundColor: "transparent" 
         }}
       >
@@ -696,7 +777,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {newMessageNotification && (
         <button
           onClick={() => {
-            setIsSidebarCollapsed(false);
             setIsChatHidden(false);
             setNewMessageNotification(null);
           }}
@@ -704,20 +784,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         >
           <MessageSquare className="w-3.5 h-3.5" />
           <span>{newMessageNotification} (Nhấn để xem)</span>
-        </button>
-      )}
-
-      {/* Floating Restore Sidebar Button when fully collapsed */}
-      {isSidebarCollapsed && (
-        <button
-          onClick={() => {
-            setIsSidebarCollapsed(false);
-            setIsChatHidden(false);
-          }}
-          className="fixed bottom-6 right-6 bg-zinc-900/90 hover:bg-zinc-800/95 text-white border border-zinc-700/40 p-3 rounded-full shadow-2xl z-50 transition-all cursor-pointer active:scale-95 flex items-center justify-center"
-          title="Hiện thanh điều khiển & Chat"
-        >
-          <MessageSquare className="w-5 h-5 text-blue-400" />
         </button>
       )}
     </div>
