@@ -63,7 +63,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Backdrop */}
-      <div className="relative w-full aspect-video overflow-hidden bg-zinc-950">
+      <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 group">
         <img
           src={backdropUrl}
           alt={movie.name}
@@ -71,7 +71,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
-          <div className="absolute top-4 right-4 z-30">
+          <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
           </div>
         )}
