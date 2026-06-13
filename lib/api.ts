@@ -288,17 +288,17 @@ export async function getChiTietPhim(
 
   if (ophimRes?.data?.item) {
     baseMovie = ophimRes.data.item;
-    allEpisodes.push(...(baseMovie.episodes?.map(e => ({ ...e, server_name: `Ophim - ${e.server_name}` })) || []));
+    allEpisodes.push(...(baseMovie.episodes?.map(e => ({ ...e, server_name: `MOCA PRO - ${e.server_name}` })) || []));
   }
   
   if (phimapiRes?.data?.item) {
     if (!baseMovie) baseMovie = phimapiRes.data.item;
-    allEpisodes.push(...(phimapiRes.data.item.episodes?.map(e => ({ ...e, server_name: `PhimAPI - ${e.server_name}` })) || []));
+    allEpisodes.push(...(phimapiRes.data.item.episodes?.map(e => ({ ...e, server_name: `MOCA VIP - ${e.server_name}` })) || []));
   }
 
   if (nguoncRes) {
     if (!baseMovie) baseMovie = nguoncRes;
-    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `NguonC - ${e.server_name}` })) || []));
+    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `MOCA MAX - ${e.server_name}` })) || []));
   }
 
   if (!baseMovie) return null;

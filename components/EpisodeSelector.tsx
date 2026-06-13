@@ -68,7 +68,7 @@ export default function EpisodeSelector({
       </h3>
       
       {/* Server Selection */}
-      {episodes.length > 1 && (
+      {episodes.length > 0 && (
         <div className="mb-4">
           <div className="flex flex-wrap gap-2">
             {episodes.map((server, index) => (
