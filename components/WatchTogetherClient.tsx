@@ -455,7 +455,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   // Sync state for single watchers (hosts)
   useEffect(() => {
-    if (watchers.length <= 1 && isJoined) {
+    if (watchers.length === 1 && isJoined) {
       hasSynced.current = true;
     }
   }, [watchers, isJoined]);
