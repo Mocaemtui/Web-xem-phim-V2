@@ -116,6 +116,10 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Nhập tin nhắn..."
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             className="flex-1 bg-zinc-900/30 hover:bg-zinc-900/50 text-zinc-200 text-sm rounded-xl px-4 py-2.5 outline-none transition-all duration-200 placeholder-zinc-500"
           />
           <button

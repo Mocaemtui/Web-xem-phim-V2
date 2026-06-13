@@ -217,6 +217,34 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     currentServerIndexRef.current = currentServerIndex;
     currentEpisodeIndexRef.current = currentEpisodeIndex;
   }, [currentServerIndex, currentEpisodeIndex]);
+
+  const pendingSyncTimeRef = useRef<number | null>(null);
+  const pendingSyncPlayingRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      if (pendingSyncTimeRef.current !== null) {
+        isReceivingEvent.current = true;
+        video.currentTime = pendingSyncTimeRef.current;
+        if (pendingSyncPlayingRef.current) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+        pendingSyncTimeRef.current = null;
+        pendingSyncPlayingRef.current = null;
+        setTimeout(() => { isReceivingEvent.current = false; }, 500);
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [currentEpisode, videoRef]);
   
   // Mọi người đều là Host
   const {
@@ -263,13 +291,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   }, [username, isJoined, triggerSystemAction]);
 
   const handleBuffering = (isBuffering: boolean) => {
-    if (isBuffering && isJoined) {
-      const now = Date.now();
-      if (now - lastBufferTimeRef.current > 6000) { // limit to every 6s to avoid spam
-        triggerSystemAction(`${username} đang gặp sự cố mạng / đang tải video (buffering)...`);
-        lastBufferTimeRef.current = now;
-      }
-    }
+    // Buffering system message removed
   };
 
   useEffect(() => {
@@ -369,19 +391,30 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     onSyncResponseRef.current = (data) => {
       if (hasSynced.current) return;
       hasSynced.current = true;
+
+      const isEpisodeDifferent = data.serverIndex !== currentServerIndexRef.current || data.episodeIndex !== currentEpisodeIndexRef.current;
+
       if (data.serverIndex !== undefined && data.episodeIndex !== undefined) {
         setCurrentServerIndex(data.serverIndex);
         setCurrentEpisodeIndex(data.episodeIndex);
       }
-      if (videoRef.current) {
-        isReceivingEvent.current = true;
-        videoRef.current.currentTime = data.time;
-        if (data.isPlaying) {
-          videoRef.current.play().catch(() => {});
-        } else {
-          videoRef.current.pause();
+
+      if (isEpisodeDifferent) {
+        // Store the target time/state to apply once the new episode manifest is loaded
+        pendingSyncTimeRef.current = data.time;
+        pendingSyncPlayingRef.current = data.isPlaying;
+      } else {
+        // Same episode, sync immediately
+        if (videoRef.current) {
+          isReceivingEvent.current = true;
+          videoRef.current.currentTime = data.time;
+          if (data.isPlaying) {
+            videoRef.current.play().catch(() => {});
+          } else {
+            videoRef.current.pause();
+          }
+          setTimeout(() => { isReceivingEvent.current = false; }, 500);
         }
-        setTimeout(() => { isReceivingEvent.current = false; }, 500);
       }
     };
 
