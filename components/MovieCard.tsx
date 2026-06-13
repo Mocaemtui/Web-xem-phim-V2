@@ -12,10 +12,15 @@ export default function MovieCard({ movie, posterUrl }: MovieCardProps) {
     return null;
   }
 
-  // Synchronize image source logic to match MovieDetail.tsx poster (Ophim thumb_url)
-  const finalPosterUrl = movie.thumb_url
-    ? (movie.thumb_url.startsWith('http') ? movie.thumb_url : `https://img.ophim.live/uploads/movies/${movie.thumb_url}`)
-    : (movie.poster_url.startsWith('http') ? movie.poster_url : `https://img.ophim.live/uploads/movies/${movie.poster_url}`);
+  // Synchronize image source logic to match MovieDetail.tsx poster (Ophim thumb_url & PhimAPI upload/ path)
+  const resolveImgUrl = (url: string | undefined) => {
+    if (!url) return "";
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('upload/')) return `https://phimimg.com/${url}`;
+    return `https://img.ophim.live/uploads/movies/${url}`;
+  };
+
+  const finalPosterUrl = movie.thumb_url ? resolveImgUrl(movie.thumb_url) : resolveImgUrl(movie.poster_url);
 
   return (
     <Link href={`/phim/${encodeURIComponent(movie.slug)}`} className="group">

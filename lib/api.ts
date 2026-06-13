@@ -146,11 +146,11 @@ export async function searchPhim(
     return `${normalizedOriginName}-${item.year || 'unknown'}`;
   };
 
-  const addItems = (res: any) => {
+  const addItems = (res: any, sourceName: string) => {
     const processItem = (item: Movie) => {
       const key = getSmartKey(item);
       if (!itemsMap.has(key)) {
-        itemsMap.set(key, item);
+        itemsMap.set(key, { ...item, source: sourceName } as any);
       }
     };
 
@@ -161,8 +161,8 @@ export async function searchPhim(
     }
   };
 
-  addItems(ophimRes);
-  addItems(phimapiRes);
+  addItems(ophimRes, 'ophim');
+  addItems(phimapiRes, 'phimapi');
 
   if (itemsMap.size === 0) return null;
 

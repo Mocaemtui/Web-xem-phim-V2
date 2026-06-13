@@ -12,6 +12,7 @@ interface SearchGridProps {
 export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
   const [isLoadingNguonC, setIsLoadingNguonC] = useState(true);
+  const [selectedSource, setSelectedSource] = useState<string>("all");
 
   useEffect(() => {
     const fetchNguonC = async () => {
@@ -53,7 +54,8 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
                 poster_url: item.thumb_url || item.poster_url,
                 thumb_url: item.thumb_url || item.poster_url,
                 year: item.year || new Date().getFullYear(),
-              });
+                source: 'nguonc' // Tag source as NguonC
+              } as any);
               existingKeys.add(itemKey);
             }
           }
@@ -73,20 +75,67 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
-  if (movies.length === 0 && !isLoadingNguonC) {
+  const filteredMovies = movies.filter((movie: any) => {
+    if (selectedSource === "all") return true;
+    return movie.source === selectedSource;
+  });
+
+  const sourceFilters = [
+    { id: "all", name: "Tất cả" },
+    { id: "ophim", name: "Ophim" },
+    { id: "phimapi", name: "PhimAPI" },
+    { id: "nguonc", name: "NguonC" },
+  ];
+
+  if (filteredMovies.length === 0 && !isLoadingNguonC) {
     return (
-      <div className="text-center py-16">
-        <p className="text-zinc-400 text-lg">
-          Không tìm thấy phim nào với từ khóa "{keyword}"
-        </p>
+      <div>
+        {/* Source Filter Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8 justify-center sm:justify-start">
+          {sourceFilters.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedSource(tab.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border cursor-pointer ${
+                selectedSource === tab.id
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
+              }`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+        <div className="text-center py-16">
+          <p className="text-zinc-400 text-lg">
+            Không tìm thấy phim nào từ nguồn này với từ khóa "{keyword}"
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {/* Source Filter Tabs */}
+      <div className="flex flex-wrap gap-2 mb-8 justify-center sm:justify-start">
+        {sourceFilters.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSelectedSource(tab.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border cursor-pointer ${
+              selectedSource === tab.id
+                ? "bg-blue-600 border-blue-500 text-white"
+                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
+            }`}
+          >
+            {tab.name}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {movies.map((movie) => (
+        {filteredMovies.map((movie) => (
           <MovieCardWrapper key={movie._id} movie={movie} />
         ))}
       </div>
