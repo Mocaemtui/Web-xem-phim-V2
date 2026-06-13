@@ -357,17 +357,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           }`}
           onDoubleClick={() => setIsTheaterMode(prev => !prev)}
         >
-        {isTheaterMode && (
-          <button
-            onClick={() => setIsTheaterMode(false)}
-            className="absolute top-4 left-4 z-50 bg-black/60 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition-all duration-300 opacity-0 group-hover/theater:opacity-100 pointer-events-none group-hover/theater:pointer-events-auto shadow-lg flex items-center justify-center cursor-pointer"
-            title="Thu nhỏ (Esc)"
-          >
-            <svg className="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 12v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6" />
-            </svg>
-          </button>
-        )}
+
 
         {/* Mobile Spacer (holds height for fixed top video player on mobile) */}
         {!isTheaterMode && (
