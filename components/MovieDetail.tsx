@@ -71,8 +71,10 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
         {tmdbBackdropUrl && (
-          <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 invisible group-hover:visible pointer-events-none group-hover:pointer-events-auto transition-all duration-300">
-            <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
+          <div className="absolute top-0 right-0 w-48 h-48 z-30 group/corner flex items-start justify-end p-4">
+            <div className="opacity-0 group-hover/corner:opacity-100 invisible group-hover/corner:visible pointer-events-none group-hover/corner:pointer-events-auto transition-all duration-300">
+              <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
+            </div>
           </div>
         )}
       </div>

@@ -28,9 +28,22 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isTheaterMode, setIsTheaterMode] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
   const currentServerIndexRef = useRef(currentServerIndex);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
+
+  useEffect(() => {
+    if (isTheaterMode) {
+      if (containerRef.current && !document.fullscreenElement) {
+        containerRef.current.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }, [isTheaterMode]);
 
   useEffect(() => {
     currentServerIndexRef.current = currentServerIndex;
@@ -191,14 +204,14 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div className="fixed md:relative inset-0 md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+    <div ref={containerRef} className="h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
       {isTheaterMode && (
         <style dangerouslySetInnerHTML={{__html: `
           header { display: none !important; }
         `}} />
       )}
       
-      {/* Keyboard focus scroll locking & Esc key listener */}
+      {/* Esc key & native fullscreen change listener */}
       <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} />
 
       {/* Left Area: Video Player & Controls */}
@@ -479,33 +492,19 @@ function KeyboardAndTheaterHandler({ setIsTheaterMode }: { setIsTheaterMode: (va
     };
     window.addEventListener("keydown", handleKeyDown);
 
-    // Prevent document body scrolling on mobile when focusing inputs
-    const handleFocus = () => {
-      if (window.innerWidth < 768) {
-        window.scrollTo(0, 0);
-        document.body.scrollTop = 0;
-      }
+    // Listen to native fullscreen changes (e.g. exiting fullscreen via Esc/browser controls)
+    const handleFullscreenChange = () => {
+      setIsTheaterMode(!!document.fullscreenElement);
     };
-
-    document.addEventListener("focusin", handleFocus);
-    document.addEventListener("focusout", handleFocus);
-
-    const handleScroll = () => {
-      if (window.innerWidth < 768 && window.scrollY > 0) {
-        window.scrollTo(0, 0);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("focusin", handleFocus);
-      document.removeEventListener("focusout", handleFocus);
-      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, [setIsTheaterMode]);
 
   return null;
 }
+
 
