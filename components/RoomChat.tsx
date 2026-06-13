@@ -103,7 +103,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         )}
       </div>
 
-      <div className="p-3 bg-transparent border-t border-zinc-900/10">
+      <div className="p-3 pb-6 md:pb-3 bg-transparent border-t border-zinc-900/10">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"

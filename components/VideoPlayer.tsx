@@ -91,7 +91,6 @@ export default function VideoPlayer({
   
   // Progress Save & Resume Watch
   const [savedTime, setSavedTime] = useState<number | null>(null);
-  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const lastSavedTimeRef = useRef(0);
   
   const isMountedRef = useRef(true);
@@ -192,30 +191,40 @@ export default function VideoPlayer({
     };
   }, [showAutoNext, onAutoNext]);
 
-  // Load saved playback progress
+  // Load saved playback progress and auto resume
   useEffect(() => {
-    if (!videoUrl) return;
+    if (!videoUrl || isWatchTogether) return;
     try {
       const key = `playback_progress_${videoUrl}`;
       const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = parseFloat(saved);
-        // Prompt to resume if progress is > 10 seconds
         if (parsed > 10) {
           setSavedTime(parsed);
-          setShowResumePrompt(true);
-          const timer = setTimeout(() => {
-            setShowResumePrompt(false);
-          }, 8000);
-          return () => clearTimeout(timer);
+          const video = videoRef.current;
+          if (video) {
+            if (video.readyState >= 1) {
+              video.currentTime = parsed;
+              setCurrentTime(parsed);
+              video.play().catch(() => {});
+            } else {
+              const handleResumeOnLoad = () => {
+                if (isMountedRef.current) {
+                  video.currentTime = parsed;
+                  setCurrentTime(parsed);
+                  video.play().catch(() => {});
+                }
+                video.removeEventListener("loadedmetadata", handleResumeOnLoad);
+              };
+              video.addEventListener("loadedmetadata", handleResumeOnLoad);
+            }
+          }
         }
       }
     } catch (e) {
       console.warn("Could not load playback progress", e);
     }
-    setSavedTime(null);
-    setShowResumePrompt(false);
-  }, [videoUrl]);
+  }, [videoUrl, isWatchTogether]);
 
   // Prefetch next episode manifest when 90% through current video
   useEffect(() => {
@@ -232,15 +241,7 @@ export default function VideoPlayer({
     }
   }, [currentTime, duration, nextVideoUrl]);
 
-  const handleResumePlayback = () => {
-    const video = videoRef.current;
-    if (video && savedTime) {
-      video.currentTime = savedTime;
-      setCurrentTime(savedTime);
-      video.play().catch(() => {});
-    }
-    setShowResumePrompt(false);
-  };
+
 
   // Setup HLS / Stream source
   useEffect(() => {
@@ -397,12 +398,8 @@ export default function VideoPlayer({
 
     if (video.paused) {
       video.play().catch(() => {});
-      setIsPlaying(true);
-      if (onPlaySync) onPlaySync();
     } else {
       video.pause();
-      setIsPlaying(false);
-      if (onPauseSync) onPauseSync();
     }
   };
 
@@ -813,29 +810,7 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Resume Playback Prompt */}
-        {showResumePrompt && savedTime && (
-          <div className="absolute bottom-20 left-4 bg-zinc-950/90 border border-zinc-800 text-white px-4 py-3 rounded-xl shadow-2xl z-30 flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Xem dở lần trước</span>
-              <span className="text-xs font-semibold text-white">Xem tiếp từ {formatTime(savedTime)}?</span>
-            </div>
-            <div className="flex items-center gap-1.5 ml-2">
-              <button
-                onClick={handleResumePlayback}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 shadow-md"
-              >
-                Xem tiếp
-              </button>
-              <button
-                onClick={() => setShowResumePrompt(false)}
-                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700/50"
-              >
-                Bỏ qua
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Custom Controls - only show for video element */}
         {videoUrl && (
