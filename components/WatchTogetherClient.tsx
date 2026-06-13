@@ -31,6 +31,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [showWatchers, setShowWatchers] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [isChatHidden, setIsChatHidden] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
 
   useEffect(() => {
@@ -166,9 +167,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     if (messages.length > lastMessageCountRef.current) {
       const lastMsg = messages[messages.length - 1];
       if (!lastMsg.isSystem && isChatHidden) {
-        setIsChatHidden(false);
         setNewMessageNotification(`Tin nhắn mới từ ${lastMsg.sender}: "${lastMsg.text}"`);
-        setTimeout(() => setNewMessageNotification(null), 4000);
       }
       lastMessageCountRef.current = messages.length;
     }
@@ -384,6 +383,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 videoUrl={currentEpisode.link_m3u8}
                 nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
                 isWatchTogether={true}
+                isTheaterMode={isTheaterMode}
                 onPlaySync={() => {
                   if (hasSynced.current && !isReceivingEvent.current && videoRef.current) triggerPlay(videoRef.current.currentTime);
                 }}
@@ -554,13 +554,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className="hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
-        style={{ width: isTheaterMode ? "260px" : `${chatWidth}px`, backgroundColor: "transparent" }}
+        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-all duration-300 ${
+          isSidebarCollapsed ? "w-0 p-0 overflow-hidden" : "p-3 md:p-4 gap-3 overflow-visible"
+        }`}
+        style={{ 
+          width: isSidebarCollapsed ? "0px" : (isChatHidden ? "60px" : (isTheaterMode ? "260px" : `${chatWidth}px`)), 
+          backgroundColor: "transparent" 
+        }}
       >
 
 
         {/* Sleek controls row: Watchers & Emojis Popovers */}
-        <div className="flex items-center gap-2 justify-end relative z-20 shrink-0">
+        <div className={`flex items-center gap-2 justify-end relative z-20 shrink-0 ${isChatHidden ? "flex-col" : "flex-row"}`}>
           
           {/* Watchers Popover */}
           <div className="relative">
@@ -576,7 +581,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </button>
 
             {showWatchers && (
-              <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-3 rounded-lg shadow-2xl z-30 min-w-[180px] max-w-[240px]">
+              <div className="absolute right-full top-0 mr-2 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-3 rounded-lg shadow-2xl z-50 min-w-[180px] max-w-[240px]">
                 <h4 className="text-[11px] font-semibold text-zinc-400 mb-2 border-b border-zinc-900 pb-1">Người xem ({watchers.length})</h4>
                 <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
                   {watchers.map((w) => (
@@ -602,14 +607,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </button>
 
             {showEmojis && (
-              <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-2 rounded-lg shadow-2xl z-30 min-w-[200px]">
+              <div className="absolute right-full top-0 mr-2 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-2 rounded-lg shadow-2xl z-50 min-w-[200px]">
                 <div className="grid grid-cols-5 gap-1.5 justify-items-center">
                   {EMOJIS.map(emoji => (
                     <button
                       key={emoji}
                       onClick={() => {
                         triggerReaction(emoji);
-                        setShowEmojis(false);
                       }}
                       className="text-lg hover:scale-125 active:scale-95 transition-transform duration-100 cursor-pointer"
                     >
@@ -621,7 +625,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             )}
           </div>
 
-          {/* Hide/Show Chat Toggle Button */}
+           {/* Hide/Show Chat Toggle Button */}
           <button
             onClick={() => {
               setIsChatHidden(prev => !prev);
@@ -633,6 +637,23 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           >
             {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </button>
+
+          {/* Full Width / Collapse Sidebar Option when chat is hidden */}
+          {isChatHidden && (
+            <button
+              onClick={() => {
+                setIsSidebarCollapsed(true);
+                setShowWatchers(false);
+                setShowEmojis(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
+              title="Xem toàn màn hình (Ẩn thanh điều khiển)"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+              </svg>
+            </button>
+          )}
 
         </div>
 
@@ -673,10 +694,31 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       )}
     {/* New Message Toast Notification Alert */}
       {newMessageNotification && (
-        <div className="fixed bottom-24 right-6 bg-blue-600/90 backdrop-blur-md text-white border border-blue-500/30 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-xs flex items-center gap-2 animate-bounce">
+        <button
+          onClick={() => {
+            setIsSidebarCollapsed(false);
+            setIsChatHidden(false);
+            setNewMessageNotification(null);
+          }}
+          className="fixed bottom-24 right-6 bg-blue-600/90 hover:bg-blue-700/90 backdrop-blur-md text-white border border-blue-500/30 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-xs flex items-center gap-2 animate-bounce cursor-pointer"
+        >
           <MessageSquare className="w-3.5 h-3.5" />
-          <span>{newMessageNotification}</span>
-        </div>
+          <span>{newMessageNotification} (Nhấn để xem)</span>
+        </button>
+      )}
+
+      {/* Floating Restore Sidebar Button when fully collapsed */}
+      {isSidebarCollapsed && (
+        <button
+          onClick={() => {
+            setIsSidebarCollapsed(false);
+            setIsChatHidden(false);
+          }}
+          className="fixed bottom-6 right-6 bg-zinc-900/90 hover:bg-zinc-800/95 text-white border border-zinc-700/40 p-3 rounded-full shadow-2xl z-50 transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+          title="Hiện thanh điều khiển & Chat"
+        >
+          <MessageSquare className="w-5 h-5 text-blue-400" />
+        </button>
       )}
     </div>
   );

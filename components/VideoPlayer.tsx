@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   nextVideoUrl?: string;
   onAutoNext?: () => void;
   isWatchTogether?: boolean;
+  isTheaterMode?: boolean;
 }
 
 export default function VideoPlayer({
@@ -28,7 +29,8 @@ export default function VideoPlayer({
   hasNextEpisode,
   nextVideoUrl,
   onAutoNext,
-  isWatchTogether
+  isWatchTogether,
+  isTheaterMode
 }: VideoPlayerProps) {
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const videoRef = externalVideoRef || internalVideoRef;
@@ -550,7 +552,9 @@ export default function VideoPlayer({
 
       {/* Player Container */}
       <div 
-        className="relative w-full h-full max-h-full bg-transparent rounded-lg overflow-hidden group z-10 flex items-center justify-center"
+        className={`relative w-full h-full max-h-full bg-transparent rounded-lg group z-10 flex items-center justify-center ${
+          isFullscreen || isTheaterMode || isWatchTogether ? "overflow-visible" : "overflow-hidden"
+        }`}
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
