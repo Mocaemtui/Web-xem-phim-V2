@@ -61,6 +61,21 @@ export default function VideoPlayer({
 
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
+  const [autoPlayNext, setAutoPlayNext] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("auto_play_next");
+      return saved !== "false";
+    }
+    return true;
+  });
+
+  const handleAutoPlayNextToggle = () => {
+    const nextVal = !autoPlayNext;
+    setAutoPlayNext(nextVal);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auto_play_next", String(nextVal));
+    }
+  };
   
   // Progress Save & Resume Watch
   const [savedTime, setSavedTime] = useState<number | null>(null);
@@ -122,7 +137,7 @@ export default function VideoPlayer({
     if (!hasNextEpisode || !onAutoNext) return;
 
     const remainingTime = duration - currentTime;
-    if (isPlaying && duration > 0 && remainingTime > 0 && remainingTime <= 5) {
+    if (autoPlayNext && isPlaying && duration > 0 && remainingTime > 0 && remainingTime <= 5) {
       if (!showAutoNext) {
         setShowAutoNext(true);
         setAutoNextCountdown(Math.ceil(remainingTime));
@@ -706,6 +721,19 @@ export default function VideoPlayer({
               </div>
 
               <div className="flex items-center gap-2">
+                 {/* Auto Play Next Toggle */}
+                {hasNextEpisode && (
+                  <button
+                    onClick={handleAutoPlayNextToggle}
+                    className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${autoPlayNext ? "text-blue-400" : "text-zinc-500"}`}
+                    title="Tự động chuyển tập tiếp theo"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M3 12h18" />
+                    </svg>
+                  </button>
+                )}
+
                 {/* Ambient Light Toggle */}
                 <button
                   onClick={handleAmbientToggle}
