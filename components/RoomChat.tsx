@@ -42,8 +42,8 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900/30 backdrop-blur-md rounded-lg overflow-hidden border border-zinc-800/30">
-      <div className="p-4 border-b border-zinc-800/30 bg-zinc-950/20">
+    <div className="flex flex-col h-full bg-zinc-950/10 backdrop-blur-md rounded-lg overflow-hidden border border-zinc-900/10 shadow-none">
+      <div className="p-4 border-b border-zinc-900/10 bg-transparent">
         <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
       </div>
       
@@ -55,7 +55,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
             if (msg.isSystem) {
               return (
                 <div key={msg.id} className="flex justify-center my-2">
-                  <span className="text-xs text-zinc-500 italic bg-zinc-800/50 px-3 py-1 rounded-full">
+                  <span className="text-xs text-zinc-500 italic bg-zinc-900/50 px-3 py-1 rounded-full">
                     {msg.text}
                   </span>
                 </div>
@@ -70,7 +70,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <p className="text-zinc-300 text-sm mt-1 bg-zinc-800/50 w-fit py-1.5 px-3 rounded-lg rounded-tl-none break-words max-w-[90%]">
+                <p className="text-zinc-300 text-sm mt-1 bg-zinc-900/40 w-fit py-1.5 px-3 rounded-lg rounded-tl-none break-words max-w-[90%]">
                   {msg.text}
                 </p>
               </div>
@@ -91,14 +91,14 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         )}
       </div>
 
-      <div className="p-3 bg-zinc-950/20 border-t border-zinc-800/30">
+      <div className="p-3 bg-transparent border-t border-zinc-900/10">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
             value={text}
             onChange={handleChange}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-zinc-800/50 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
+            className="flex-1 bg-zinc-900/30 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
           />
           <button
             type="submit"
@@ -112,4 +112,5 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
     </div>
   );
 }
+
 

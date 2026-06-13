@@ -522,7 +522,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           style={{ zIndex: 0 }}
         />
 
-        <div className="p-2.5 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
+        <div className="p-2.5 bg-zinc-950/10 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-400 shrink-0" />
             <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto flex-1">
@@ -539,7 +539,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Reaction Bar */}
         {isJoined && (
-          <div className="px-4 py-2 bg-zinc-900/20 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
+          <div className="px-4 py-2 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
+
             <div className="flex flex-wrap items-center gap-2 justify-center py-2 bg-zinc-900/40 rounded-lg border border-zinc-800/60">
               {EMOJIS.map(emoji => (
                 <button
