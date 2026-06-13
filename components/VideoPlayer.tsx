@@ -799,10 +799,10 @@ export default function VideoPlayer({
         ) : embedUrl ? (
           <iframe
             src={embedUrl}
-            className="max-w-full max-h-full aspect-video"
+            className="max-w-full max-h-full aspect-video w-full h-full rounded-lg"
             allowFullScreen
             allow="autoplay; encrypted-media"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div className="max-w-full max-h-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
