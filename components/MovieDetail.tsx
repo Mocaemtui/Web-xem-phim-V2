@@ -227,34 +227,72 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
               </div>
             )}
 
-            {/* Watch Buttons */}
+            {/* Watch Buttons or Trailer Info */}
             <div className="flex flex-wrap gap-4 mt-2">
-              {movie.slug && (
-                <Link
-                  href={`/xem-phim/${movie.slug}`}
-                  className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors w-fit"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Xem phim
-                </Link>
-              )}
-              {movie.slug && (
-                <button
-                  onClick={() => {
-                    const roomId = Math.random().toString(36).substring(2, 9);
-                    sessionStorage.setItem(`host_${roomId}`, 'true');
-                    window.location.href = `/watch-together/${movie.slug}/${roomId}`;
-                  }}
-                  className="inline-flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-lg transition-colors w-fit border border-zinc-700"
-                >
-                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Xem chung cùng bạn bè
-                </button>
+              {movie.episodes && 
+              movie.episodes.length > 0 && 
+              movie.episodes[0].server_data && 
+              movie.episodes[0].server_data.length > 0 &&
+              movie.episodes[0].server_data[0].link_m3u8 ? (
+                <>
+                  {movie.slug && (
+                    <Link
+                      href={`/xem-phim/${movie.slug}`}
+                      className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors w-fit shadow-lg shadow-blue-900/20 active:scale-95"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Xem phim
+                    </Link>
+                  )}
+                  {movie.slug && (
+                    <button
+                      onClick={() => {
+                        const roomId = Math.random().toString(36).substring(2, 9);
+                        sessionStorage.setItem(`host_${roomId}`, 'true');
+                        window.location.href = `/watch-together/${movie.slug}/${roomId}`;
+                      }}
+                      className="inline-flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-lg transition-colors w-fit border border-zinc-700 active:scale-95"
+                    >
+                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Xem chung cùng bạn bè
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="bg-amber-950/20 border border-amber-900/40 rounded-xl p-4 text-amber-200 text-sm max-w-xl">
+                    <p className="font-semibold mb-1 flex items-center gap-1.5 text-amber-400">
+                      <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                      Phim chưa phát sóng chính thức
+                    </p>
+                    <p className="text-zinc-400 text-xs mt-1">Hiện tại phim chưa có tập phát sóng (chỉ có trailer/sắp chiếu). Bạn có thể thưởng thức Trailer chính thức dưới đây.</p>
+                  </div>
+                  {movie.trailer_url ? (
+                    <a
+                      href={movie.trailer_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium px-8 py-3 rounded-lg transition-colors w-fit active:scale-95 shadow-lg shadow-red-900/20"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.163a3.003 3.003 0 00-2.11-2.11C19.518 3.5 12 3.5 12 3.5s-7.518 0-9.388.553a3.003 3.003 0 00-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 002.11 2.11c1.87.553 9.388.553 9.388.553s7.518 0 9.388-.553a3.003 3.003 0 002.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                      </svg>
+                      Xem Trailer chính thức
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      className="inline-flex items-center justify-center gap-2 bg-zinc-800 text-zinc-500 font-medium px-8 py-3 rounded-lg w-fit cursor-not-allowed border border-zinc-700/50"
+                    >
+                      Chưa có Trailer
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
