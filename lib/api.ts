@@ -296,8 +296,8 @@ export async function getChiTietPhim(
           : Promise.resolve(null)
       ]);
 
-      let fetchOphimPromise: Promise<any> | null = null;
-      let fetchPhimapiPromise: Promise<any> | null = null;
+      let fetchOphimPromise: Promise<ApiResponse<{ item: MovieDetail }> | null> | null = null;
+      let fetchPhimapiPromise: Promise<ApiResponse<{ item: MovieDetail }> | null> | null = null;
 
       if (searchOphim?.data?.items) {
         const match = searchOphim.data.items.find(m => 
