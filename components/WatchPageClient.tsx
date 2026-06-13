@@ -83,19 +83,19 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
         
         if (data?.movie?.episodes) {
           const nguonCEps = data.movie.episodes.map((epServer: any) => ({
-            server_name: `MOCA MAX - ${epServer.server_name || "Vietsub"}`,
-            server_data: epServer.items?.map((ep: any) => ({
-              name: ep.name,
-              slug: ep.slug,
-              filename: ep.name,
+            server_name: `NguonC - ${epServer.server_name}`,
+            server_data: epServer.items.map((item: any) => ({
+              name: item.name,
+              slug: item.slug,
+              filename: item.name,
               link: "",
-              link_embed: ep.embed,
-              link_m3u8: "", // NguonC blocks m3u8 CORS, force iframe embed fallback
-            })) || []
+              link_embed: item.embed,
+              link_m3u8: "" // NguonC always empty for iframe fallback
+            }))
           }));
           
           setEpisodes(prev => {
-            if (prev.some(e => e.server_name.startsWith('MOCA MAX'))) return prev;
+            if (prev.some(e => e.server_name.startsWith('NguonC'))) return prev;
             return [...prev, ...nguonCEps];
           });
         }
@@ -105,7 +105,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     };
 
     // Only fetch if NguonC hasn't already been provided by SSR
-    if (!episodes.some(e => e.server_name.startsWith('MOCA MAX'))) {
+    if (!episodes.some(e => e.server_name.startsWith('NguonC'))) {
       fetchNguonC();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,15 +113,24 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
 
   useEffect(() => {
     if (!isRestored) {
-      // Check query parameters first (e.g. ?tap=3)
+      // Check query parameters first (e.g. ?tap=3&server=0)
       if (typeof window !== "undefined") {
         const params = new URLSearchParams(window.location.search);
         const tapParam = params.get("tap");
-        if (tapParam) {
-          const tapIdx = parseInt(tapParam, 10) - 1;
-          if (episodes?.[0]?.server_data?.[tapIdx]) {
+        const serverParam = params.get("server");
+        
+        let sIdx = serverParam ? parseInt(serverParam, 10) : 0;
+        let tIdx = tapParam ? parseInt(tapParam, 10) - 1 : 0;
+        
+        if (tapParam || serverParam) {
+          if (episodes?.[sIdx]?.server_data?.[tIdx]) {
+            setCurrentServerIndex(sIdx);
+            setCurrentEpisodeIndex(tIdx);
+            setIsRestored(true);
+            return;
+          } else if (episodes?.[0]?.server_data?.[tIdx]) {
             setCurrentServerIndex(0);
-            setCurrentEpisodeIndex(tapIdx);
+            setCurrentEpisodeIndex(tIdx);
             setIsRestored(true);
             return;
           }
@@ -174,6 +183,60 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
   return (
     <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
       <div className="container mx-auto px-4 py-8">
+        
+        {/* Movie Info (Moved to top) */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            {movie.name} - {currentEpisode?.name.toLowerCase().includes("tập") ? currentEpisode.name : `Tập ${currentEpisode?.name || currentEpisodeIndex + 1}`}
+          </h1>
+          {movie.origin_name && (
+            <p className="text-lg text-zinc-400 mb-4">{movie.origin_name}</p>
+          )}
+
+          <div className="flex flex-wrap gap-3 text-sm mb-4">
+            <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+              {movie.year}
+            </span>
+            {movie.quality && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.quality}
+              </span>
+            )}
+            {movie.lang && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.lang}
+              </span>
+            )}
+            {movie.time && (
+              <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full">
+                {movie.time}
+              </span>
+            )}
+          </div>
+
+          {/* Categories */}
+          {movie.category && movie.category.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {movie.category.map((cat: any) => (
+                <span
+                  key={cat.id || cat.slug}
+                  className="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-400"
+                >
+                  {cat.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Content Description */}
+          {movie.content && (
+            <div 
+              className="text-zinc-400 text-sm leading-relaxed max-w-4xl"
+              dangerouslySetInnerHTML={{ __html: movie.content }}
+            />
+          )}
+        </div>
+
         {/* Video Player */}
         <div className="mb-8 relative z-10 w-full aspect-video">
           {currentEpisode ? (
