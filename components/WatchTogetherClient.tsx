@@ -523,10 +523,11 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         )}
       </div>
 
-      {/* Resizable Divider line */}
+      {/* Resizable Divider handle (Absolutely positioned to overlap seamlessly, eliminating any black layout gap) */}
       <div 
         onMouseDown={startResizing} 
-        className="hidden md:block w-1.5 cursor-col-resize h-screen shrink-0 z-40 relative bg-transparent hover:bg-blue-500/20 transition-all duration-150" 
+        className="hidden md:block absolute top-0 bottom-0 w-2 cursor-col-resize z-50 bg-transparent hover:bg-blue-500/20 transition-all duration-150" 
+        style={{ right: `${chatWidth - 4}px` }}
       />
 
       {/* Right Area: Desktop Sidebar */}
@@ -563,8 +564,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         {/* Reaction Bar */}
         {isJoined && (
           <div className="px-4 py-1.5 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
-            <div className="flex flex-wrap items-center gap-2 justify-center py-1">
-
+            <div className="grid grid-cols-6 gap-2 w-full justify-items-center py-1">
               {EMOJIS.map(emoji => (
                 <button
                   key={emoji}
@@ -577,6 +577,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </div>
           </div>
         )}
+
 
         <div className="flex-1 overflow-hidden p-0 relative z-10">
           <RoomChat 
