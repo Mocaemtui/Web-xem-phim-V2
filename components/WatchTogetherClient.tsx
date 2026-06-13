@@ -426,8 +426,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         if (saved) {
           const parsed = parseFloat(saved);
           if (parsed > 10) {
-            setHostSavedTime(parsed);
-            setShowHostSyncPrompt(true);
+            if (videoRef.current) {
+              videoRef.current.currentTime = parsed;
+            }
+            setTimeout(() => {
+              triggerSeek(parsed);
+              sendMessage(`[Hệ thống] Host đã tự động đồng bộ mốc xem dở từ trước (${formatTime(parsed)}) cho cả phòng.`);
+            }, 1500);
           }
         }
       }
@@ -499,29 +504,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   return (
     <div ref={containerRef} className="relative min-h-screen bg-zinc-950 flex flex-col overflow-y-auto scroll-smooth">
-      {/* Host Sync Playback Prompt */}
-      {showHostSyncPrompt && hostSavedTime && (
-        <div className="fixed top-24 left-4 bg-zinc-950/95 border border-zinc-800 text-white px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-2">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Lịch sử xem dở của bạn</span>
-            <span className="text-xs font-semibold text-white">Đồng bộ mốc xem dở {formatTime(hostSavedTime)} cho cả phòng?</span>
-          </div>
-          <div className="flex items-center gap-1.5 ml-2">
-            <button
-              onClick={handleHostSyncConfirm}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 shadow-md"
-            >
-              Đồng bộ phòng
-            </button>
-            <button
-              onClick={() => setShowHostSyncPrompt(false)}
-              className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700/50"
-            >
-              Bỏ qua
-            </button>
-          </div>
-        </div>
-      )}
       {/* Global Background Ambient Glow Canvas */}
       {ambientActive && (
         <canvas
