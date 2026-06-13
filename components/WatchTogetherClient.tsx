@@ -102,6 +102,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     if (chatHideTimeoutRef.current) {
       clearTimeout(chatHideTimeoutRef.current);
     }
+    // Không áp dụng quy tắc 5s nếu không ở trạng thái zoom/màn hình nhỏ
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      return;
+    }
     chatHideTimeoutRef.current = setTimeout(() => {
       if (typeof document !== "undefined") {
         const activeEl = document.activeElement as HTMLElement | null;
@@ -525,7 +529,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       
       {/* Esc key & native fullscreen change listener */}
-      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} containerRef={containerRef} />
+      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} setIsChatHidden={setIsChatHidden} containerRef={containerRef} />
 
 
       {/* Main workspace: Side-by-side Player and Chat Sidebar (Fills the screen first fold) */}
@@ -550,7 +554,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         <div className={`w-full transition-all ${
           isTheaterMode 
             ? "h-full max-h-screen flex items-center justify-end p-0 z-40 fixed inset-0" 
-            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-zinc-950 md:bg-transparent p-0 shrink min-h-0 md:mb-6 md:flex-1 flex items-center justify-center h-[56.25vw] md:h-auto"
+            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-zinc-950 md:bg-transparent p-0 shrink min-h-0 md:mb-6 md:flex-1 flex items-center justify-center h-[56.25vw] md:h-auto md:max-h-[calc(100vh-160px)]"
         }`}>
 
           {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden & hovered near top-right) */}
@@ -959,9 +963,11 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
 function KeyboardAndTheaterHandler({ 
   setIsTheaterMode, 
+  setIsChatHidden,
   containerRef 
 }: { 
   setIsTheaterMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsChatHidden: React.Dispatch<React.SetStateAction<boolean>>;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   useEffect(() => {
@@ -983,6 +989,9 @@ function KeyboardAndTheaterHandler({
       } else if (e.key.toLowerCase() === "z") {
         e.preventDefault();
         setIsTheaterMode(prev => !prev);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        setIsChatHidden(prev => !prev);
       }
     };
     document.addEventListener("keydown", handleKeyDown, { capture: true });
