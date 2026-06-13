@@ -619,7 +619,7 @@ function KeyboardAndTheaterHandler({
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
-    // Visual Viewport resize handler to lock layout height on mobile keyboard popups
+    // Visual Viewport resize handler to lock layout height on mobile keyboard popups without jittering
     const handleResize = () => {
       const viewport = window.visualViewport;
       if (!viewport) return;
@@ -627,17 +627,14 @@ function KeyboardAndTheaterHandler({
       const root = containerRef.current;
       if (root && window.innerWidth < 768) {
         root.style.height = `${viewport.height}px`;
-        root.style.transform = `translateY(${viewport.offsetTop}px)`;
       } else if (root) {
         // Reset styles for desktop
         root.style.height = "";
-        root.style.transform = "";
       }
     };
 
     if (typeof window !== "undefined" && window.visualViewport) {
       window.visualViewport.addEventListener("resize", handleResize);
-      window.visualViewport.addEventListener("scroll", handleResize);
       // Run immediately
       handleResize();
     }
@@ -647,7 +644,6 @@ function KeyboardAndTheaterHandler({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (typeof window !== "undefined" && window.visualViewport) {
         window.visualViewport.removeEventListener("resize", handleResize);
-        window.visualViewport.removeEventListener("scroll", handleResize);
       }
     };
   }, [setIsTheaterMode, containerRef]);
