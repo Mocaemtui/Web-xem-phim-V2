@@ -11,6 +11,8 @@ import {
   type WatchHistoryItem,
 } from "@/lib/watchHistory";
 
+import { resolveImgUrl } from "@/lib/api";
+
 function timeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
   if (seconds < 60) return "Vừa xong";
@@ -64,16 +66,18 @@ export default function WatchHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-zinc-950 text-white pb-20">
+      <div className="container mx-auto px-4 py-8 mt-16 md:mt-20">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <Clock className="w-7 h-7 text-blue-400" />
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Lịch sử xem</h1>
-            {history.length > 0 && (
-              <span className="text-sm text-zinc-500">({history.length} phim)</span>
-            )}
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Clock className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Lịch sử xem</h1>
+              <p className="text-zinc-400 mt-1">Phim bạn đã xem gần đây</p>
+            </div>
           </div>
           {history.length > 0 && (
             <button
@@ -119,13 +123,7 @@ export default function WatchHistoryPage() {
                 >
                   <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
                     <Image
-                      src={
-                        item.thumb_url?.startsWith("http")
-                          ? item.thumb_url
-                          : item.poster_url?.startsWith("http")
-                          ? item.poster_url
-                          : `https://img.ophim.live/uploads/movies/${item.thumb_url || item.poster_url}`
-                      }
+                      src={resolveImgUrl(item.thumb_url || item.poster_url)}
                       alt={item.name}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"

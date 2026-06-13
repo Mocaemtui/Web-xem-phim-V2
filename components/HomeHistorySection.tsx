@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, Clock } from "lucide-react";
 import { getWatchHistory, type WatchHistoryItem } from "@/lib/watchHistory";
 import SectionTitle from "@/components/SectionTitle";
+import { resolveImgUrl } from "@/lib/api";
 
 export default function HomeHistorySection() {
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
@@ -32,13 +33,7 @@ export default function HomeHistorySection() {
           >
             <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-zinc-900 shadow-lg">
               <Image
-                src={
-                  item.thumb_url?.startsWith("http")
-                    ? item.thumb_url
-                    : item.poster_url?.startsWith("http")
-                    ? item.poster_url
-                    : `https://img.ophim.live/uploads/movies/${item.thumb_url || item.poster_url}`
-                }
+                src={resolveImgUrl(item.thumb_url || item.poster_url)}
                 alt={item.name}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105 will-change-transform"

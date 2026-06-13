@@ -7,6 +7,8 @@ import type { MovieDetail, MovieImages, MoviePeoples } from "@/types/api";
 import ImageToggle from "./ImageToggle";
 import { getWatchHistory } from "@/lib/watchHistory";
 
+import { resolveImgUrl } from "@/lib/api";
+
 interface MovieDetailProps {
   movie: MovieDetail;
   images: MovieImages;
@@ -16,14 +18,6 @@ interface MovieDetailProps {
 export default function MovieDetail({ movie, images, peoples }: MovieDetailProps) {
   const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
   const [useTmdbPoster, setUseTmdbPoster] = useState(false);
-
-  // Calculate resolved poster & thumb URLs using the same logic as MovieCard (Search page)
-  const resolveImgUrl = (url: string | undefined) => {
-    if (!url) return "";
-    if (url.startsWith('http')) return url;
-    if (url.startsWith('upload/')) return `https://phimimg.com/${url}`;
-    return `https://img.ophim.live/uploads/movies/${url}`;
-  };
 
   const ophimPosterUrl = resolveImgUrl(movie.poster_url);
   const ophimThumbUrl = resolveImgUrl(movie.thumb_url);

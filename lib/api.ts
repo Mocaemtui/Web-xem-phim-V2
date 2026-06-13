@@ -59,9 +59,30 @@ export async function getPhimMoi(
   limit: number = 20
 ): Promise<ApiResponse<MovieListResponse> | null> {
   return fetchAPI<MovieListResponse>(
-    `/v1/api/danh-sach/phim-moi?page=${page}&limit=${limit}`
+    `/v1/api/danh-sach/phim-moi-cap-nhat?page=${page}&limit=${limit}`
   );
 }
+
+// Hàm chuẩn hóa và tối ưu ảnh bằng WEBP converter của PhimAPI
+export const resolveImgUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  
+  let finalUrl = "";
+  if (url.startsWith('http')) {
+    finalUrl = url;
+  } else if (url.startsWith('upload/')) {
+    finalUrl = `https://phimimg.com/${url}`;
+  } else {
+    finalUrl = `https://img.ophim.live/uploads/movies/${url}`;
+  }
+
+  // Tối ưu ảnh: Nếu là ảnh từ phimimg.com (KKPhim/PhimAPI), sử dụng image.php để lấy file WEBP
+  if (finalUrl.includes('phimimg.com')) {
+    return `https://phimapi.com/image.php?url=${finalUrl}`;
+  }
+  
+  return finalUrl;
+};
 
 export async function getPhimBo(
   page: number = 1,
