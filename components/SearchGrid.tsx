@@ -34,9 +34,7 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     const getSmartKey = (item: Movie) => {
       const originName = item.origin_name || item.name || '';
       const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
-      // Ignore year in smart key because NguonC search API often doesn't return year,
-      // which causes it to fail to match Ophim/PhimAPI items for metadata overriding.
-      return normalizedOriginName;
+      return `${normalizedOriginName}-${item.year || 'unknown'}`;
     };
 
     // 1. Build maps of priority sources (Ophim, PhimAPI)

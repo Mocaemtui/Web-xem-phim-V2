@@ -285,29 +285,47 @@ export async function getChiTietPhim(
   if (baseMovie) {
     const originName = baseMovie.origin_name || baseMovie.name;
     
-    // Fallback tìm PhimAPI nếu không tìm thấy bằng slug
-    if (!phimapiRes?.data?.item && originName) {
-      const searchRes = await fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.PHIMAPI.url);
-      if (searchRes?.data?.items) {
-        const match = searchRes.data.items.find(m => 
+    if ((!ophimRes?.data?.item || !phimapiRes?.data?.item) && originName) {
+      // Step 1: Parallelize searches
+      const [searchOphim, searchPhimapi] = await Promise.all([
+        !ophimRes?.data?.item 
+          ? fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.OPHIM.url) 
+          : Promise.resolve(null),
+        !phimapiRes?.data?.item 
+          ? fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.PHIMAPI.url) 
+          : Promise.resolve(null)
+      ]);
+
+      let fetchOphimPromise: Promise<any> | null = null;
+      let fetchPhimapiPromise: Promise<any> | null = null;
+
+      if (searchOphim?.data?.items) {
+        const match = searchOphim.data.items.find(m => 
           (m.origin_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
         );
         if (match && match.slug !== slug) {
-          phimapiRes = await fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url);
+          fetchOphimPromise = fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.OPHIM.url);
         }
       }
-    }
 
-    // Fallback tìm Ophim nếu không tìm thấy bằng slug
-    if (!ophimRes?.data?.item && originName) {
-      const searchRes = await fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(originName)}`, 60, MOVIE_SOURCES.OPHIM.url);
-      if (searchRes?.data?.items) {
-        const match = searchRes.data.items.find(m => 
+      if (searchPhimapi?.data?.items) {
+        const match = searchPhimapi.data.items.find(m => 
           (m.origin_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
         );
         if (match && match.slug !== slug) {
-          ophimRes = await fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.OPHIM.url);
+          fetchPhimapiPromise = fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${match.slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url);
         }
+      }
+
+      // Step 2: Parallelize detail fetches
+      if (fetchOphimPromise || fetchPhimapiPromise) {
+        const [fallbackOphim, fallbackPhimapi] = await Promise.all([
+          fetchOphimPromise || Promise.resolve(null),
+          fetchPhimapiPromise || Promise.resolve(null)
+        ]);
+        
+        if (fallbackOphim?.data?.item) ophimRes = fallbackOphim;
+        if (fallbackPhimapi?.data?.item) phimapiRes = fallbackPhimapi;
       }
     }
   }
