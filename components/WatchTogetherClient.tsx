@@ -96,6 +96,54 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const currentServerIndexRef = useRef(currentServerIndex);
   const currentEpisodeIndexRef = useRef(currentEpisodeIndex);
 
+  const chatHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetChatHideTimer = () => {
+    if (chatHideTimeoutRef.current) {
+      clearTimeout(chatHideTimeoutRef.current);
+    }
+    chatHideTimeoutRef.current = setTimeout(() => {
+      if (typeof document !== "undefined") {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isInputFocused = activeEl && (
+          activeEl.tagName === "INPUT" || 
+          activeEl.tagName === "TEXTAREA" || 
+          activeEl.isContentEditable
+        );
+        if (!isInputFocused) {
+          setIsChatHidden(true);
+        } else {
+          // Keep active if user is typing
+          resetChatHideTimer();
+        }
+      }
+    }, 5000);
+  };
+
+  useEffect(() => {
+    const handleActivity = () => {
+      if (!isChatHidden) {
+        resetChatHideTimer();
+      }
+    };
+
+    if (!isChatHidden) {
+      resetChatHideTimer();
+      window.addEventListener("mousemove", handleActivity);
+      window.addEventListener("keydown", handleActivity);
+      window.addEventListener("touchstart", handleActivity);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      if (chatHideTimeoutRef.current) {
+        clearTimeout(chatHideTimeoutRef.current);
+      }
+    };
+  }, [isChatHidden]);
+
 
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -240,12 +288,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   useEffect(() => {
     if (messages.length > lastMessageCountRef.current) {
       const lastMsg = messages[messages.length - 1];
-      if (!lastMsg.isSystem && isChatHidden) {
-        setUnreadCount(prev => prev + 1);
-        setNewMessageNotification(`Có tin nhắn mới`);
-        
+      if (!lastMsg.isSystem) {
         // Play gentle notification sound when chat is hidden and sound is enabled
-        if (isSoundEnabled) {
+        if (isChatHidden && isSoundEnabled) {
           try {
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             const osc = audioCtx.createOscillator();
@@ -266,6 +311,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             // Fallback if audio context is blocked
           }
         }
+        // Tự động mở khung chat khi có tin nhắn mới
+        setIsChatHidden(false);
       }
       lastMessageCountRef.current = messages.length;
     }
@@ -623,24 +670,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                   </span>
                 )}
               </button>
-
-              {/* Floating Sound Toggle Button */}
-              <button
-                onClick={handleSoundToggle}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isSoundEnabled ? "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200" : "bg-zinc-800/80 border-zinc-700 text-red-400"}`}
-                title={isSoundEnabled ? "Tắt âm báo tin nhắn" : "Bật âm báo tin nhắn"}
-              >
-                {isSoundEnabled ? (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
-                )}
-              </button>
-
             </div>
           )}
 
@@ -895,23 +924,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             title={isChatHidden ? "Hiện cuộc trò chuyện" : "Tạm ẩn cuộc trò chuyện"}
           >
             {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
-
-          {/* Sound Toggle Button */}
-          <button
-            onClick={handleSoundToggle}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isSoundEnabled ? "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200" : "bg-zinc-800/80 border-zinc-700 text-red-400"}`}
-            title={isSoundEnabled ? "Tắt âm báo tin nhắn" : "Bật âm báo tin nhắn"}
-          >
-            {isSoundEnabled ? (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-            )}
           </button>
         </div>
 
