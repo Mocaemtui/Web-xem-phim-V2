@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MovieCardWrapper from "@/components/MovieCardWrapper";
 import type { Movie } from "@/types/api";
 
@@ -25,40 +25,16 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
         const data = await res.json();
         
         if (data && data.items && Array.isArray(data.items)) {
-          const getSmartKey = (item: any) => {
-            const originName = item.original_name || item.origin_name || item.name || '';
-            if (!originName) return item.slug;
-            const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
-            // Try to find the year from initialMovies if matching, or fallback to current year
-            return `${normalizedOriginName}-${item.year || new Date().getFullYear()}`;
-          };
-
-          // Build a set of existing smart keys from initialMovies
-          const existingKeys = new Set(initialMovies.map(m => {
-            if (!m.origin_name) return m.slug;
-            const normalizedOriginName = m.origin_name.toLowerCase().replace(/\s+/g, ' ').trim();
-            return `${normalizedOriginName}-${m.year || 'unknown'}`;
-          }));
-          
-          const newMovies: Movie[] = [];
-          
-          for (const item of data.items) {
-            const itemKey = getSmartKey(item);
-            if (!existingKeys.has(itemKey)) {
-              // Map NguonC search item format to our standard Movie format
-              newMovies.push({
-                _id: item.id || Math.random().toString(),
-                name: item.name,
-                slug: item.slug,
-                origin_name: item.original_name || item.name,
-                poster_url: item.thumb_url || item.poster_url,
-                thumb_url: item.thumb_url || item.poster_url,
-                year: item.year || new Date().getFullYear(),
-                source: 'nguonc' // Tag source as NguonC
-              } as any);
-              existingKeys.add(itemKey);
-            }
-          }
+          const newMovies: Movie[] = data.items.map((item: any) => ({
+            _id: item.id || Math.random().toString(),
+            name: item.name,
+            slug: item.slug,
+            origin_name: item.original_name || item.name,
+            poster_url: item.thumb_url || item.poster_url,
+            thumb_url: item.thumb_url || item.poster_url,
+            year: item.year || new Date().getFullYear(),
+            source: 'nguonc' // Tag source as NguonC
+          } as any));
           
           if (newMovies.length > 0) {
             setMovies(prev => [...prev, ...newMovies]);
@@ -75,17 +51,38 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
-  const filteredMovies = [...movies]
-    .sort((a: any, b: any) => {
-      const priority = { ophim: 3, phimapi: 2, nguonc: 1 } as any;
-      const priorityA = priority[a.source] || 0;
-      const priorityB = priority[b.source] || 0;
-      return priorityB - priorityA;
-    })
-    .filter((movie: any) => {
-      if (selectedSource === "all") return true;
-      return movie.source === selectedSource;
-    });
+  const filteredMovies = useMemo(() => {
+    if (selectedSource === "all") {
+      // Deduplicate movies prioritizing ophim > phimapi > nguonc
+      const itemsMap = new Map<string, Movie>();
+      
+      const getSmartKey = (item: Movie) => {
+        const originName = item.origin_name || item.name || '';
+        const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
+        return `${normalizedOriginName}-${item.year || 'unknown'}`;
+      };
+
+      // Sort movies: 'ophim' first, then 'phimapi', then 'nguonc'
+      const sortedMovies = [...movies].sort((a: any, b: any) => {
+        const priority = { ophim: 3, phimapi: 2, nguonc: 1 } as any;
+        const priorityA = priority[a.source] || 0;
+        const priorityB = priority[b.source] || 0;
+        return priorityB - priorityA;
+      });
+
+      sortedMovies.forEach(movie => {
+        const key = getSmartKey(movie);
+        if (!itemsMap.has(key)) {
+          itemsMap.set(key, movie);
+        }
+      });
+
+      return Array.from(itemsMap.values());
+    } else {
+      // Show all movies from that source directly
+      return movies.filter((movie: any) => movie.source === selectedSource);
+    }
+  }, [movies, selectedSource]);
 
   const sourceFilters = [
     { id: "all", name: "Tất cả" },

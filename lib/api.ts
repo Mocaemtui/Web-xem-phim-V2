@@ -137,21 +137,11 @@ export async function searchPhim(
     fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.PHIMAPI.url)
   ]);
 
-  const itemsMap = new Map<string, Movie>();
-
-  const getSmartKey = (item: Movie) => {
-    if (!item.origin_name) return item.slug;
-    // Chuẩn hóa tên gốc: viết thường, bỏ khoảng trắng thừa
-    const normalizedOriginName = item.origin_name.toLowerCase().replace(/\s+/g, ' ').trim();
-    return `${normalizedOriginName}-${item.year || 'unknown'}`;
-  };
+  const allItems: Movie[] = [];
 
   const addItems = (res: any, sourceName: string) => {
     const processItem = (item: Movie) => {
-      const key = getSmartKey(item);
-      if (!itemsMap.has(key)) {
-        itemsMap.set(key, { ...item, source: sourceName } as any);
-      }
+      allItems.push({ ...item, source: sourceName } as any);
     };
 
     if (res?.data?.items) {
@@ -164,16 +154,16 @@ export async function searchPhim(
   addItems(ophimRes, 'ophim');
   addItems(phimapiRes, 'phimapi');
 
-  if (itemsMap.size === 0) return null;
+  if (allItems.length === 0) return null;
 
   return {
     status: "success",
     data: {
-      items: Array.from(itemsMap.values()),
+      items: allItems,
       params: {
         pagination: {
-          totalItems: itemsMap.size,
-          totalItemsPerPage: itemsMap.size,
+          totalItems: allItems.length,
+          totalItemsPerPage: allItems.length,
           currentPage: 1,
           pageRanges: 1
         }

@@ -17,9 +17,16 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
   const [useTmdbPoster, setUseTmdbPoster] = useState(false);
 
-  // Calculate ophim poster URL
-  const ophimPosterUrl = movie.poster_url.startsWith('http') ? movie.poster_url : `https://img.ophim.live/uploads/movies/${movie.poster_url}`;
-  const ophimThumbUrl = movie.thumb_url.startsWith('http') ? movie.thumb_url : `https://img.ophim.live/uploads/movies/${movie.thumb_url}`;
+  // Calculate resolved poster & thumb URLs using the same logic as MovieCard (Search page)
+  const resolveImgUrl = (url: string | undefined) => {
+    if (!url) return "";
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('upload/')) return `https://phimimg.com/${url}`;
+    return `https://img.ophim.live/uploads/movies/${url}`;
+  };
+
+  const ophimPosterUrl = resolveImgUrl(movie.poster_url);
+  const ophimThumbUrl = resolveImgUrl(movie.thumb_url);
 
   // TMDB URLs
   const tmdbPosterFile = images?.images?.find(img => img.type === 'poster')?.file_path;
