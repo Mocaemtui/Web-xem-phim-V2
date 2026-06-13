@@ -55,9 +55,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     if (selectedSource === "all") {
       const itemsMap = new Map<string, Movie>();
       
-      // Sort movies: 'ophim' first, then 'phimapi'
+      // Sort movies: 'phimapi' first, then 'ophim'
       const sortedMovies = [...movies].sort((a: any, b: any) => {
-        const priority = { ophim: 2, phimapi: 1 } as any;
+        const priority = { phimapi: 2, ophim: 1 } as any;
         const priorityA = priority[(a as any).source] || 0;
         const priorityB = priority[(b as any).source] || 0;
         return priorityB - priorityA;

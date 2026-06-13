@@ -19,5 +19,5 @@ export const MOVIE_SOURCES = {
   }
 };
 
-// Đặt Ophim làm Nguồn chính (Primary Source)
-export const PRIMARY_SOURCE = MOVIE_SOURCES.OPHIM;
+// Đặt PhimAPI làm Nguồn chính (Primary Source) để tận dụng ảnh WEBP siêu nhẹ
+export const PRIMARY_SOURCE = MOVIE_SOURCES.PHIMAPI;
