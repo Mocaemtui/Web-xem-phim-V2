@@ -12,6 +12,7 @@ interface VideoPlayerProps {
   onSeekSync?: (time: number) => void;
   externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
   hasNextEpisode?: boolean;
+  nextVideoUrl?: string;
   onAutoNext?: () => void;
 }
 
@@ -24,6 +25,7 @@ export default function VideoPlayer({
   onSeekSync,
   externalVideoRef,
   hasNextEpisode,
+  nextVideoUrl,
   onAutoNext
 }: VideoPlayerProps) {
   const internalVideoRef = useRef<HTMLVideoElement>(null);
@@ -40,11 +42,16 @@ export default function VideoPlayer({
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
+  // Progress Save & Resume Watch
+  const [savedTime, setSavedTime] = useState<number | null>(null);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const lastSavedTimeRef = useRef(0);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Ambient Light Canvas Draw Loop
+  // Ambient Light Canvas Draw Loop with visibility and viewport checks
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -55,12 +62,22 @@ export default function VideoPlayer({
 
     let animationFrameId: number;
     let lastDrawTime = 0;
+    let isVisible = true;
+
+    // Use IntersectionObserver to track if canvas is in the viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
 
     const drawFrame = (now: number) => {
       if (video.paused || video.ended) return;
       
-      // Cap drawing rate to ~15fps (every 66ms) to save CPU/GPU cycles
-      if (now - lastDrawTime >= 66) {
+      // Only draw if tab is visible, element is in viewport, and rate cap (15fps) is met
+      if (isVisible && !document.hidden && now - lastDrawTime >= 66) {
         try {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           lastDrawTime = now;
@@ -76,6 +93,7 @@ export default function VideoPlayer({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      observer.disconnect();
     };
   }, [isPlaying, ambientActive, videoRef]);
 
@@ -118,6 +136,56 @@ export default function VideoPlayer({
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, [showAutoNext, onAutoNext]);
+
+  // Load saved playback progress
+  useEffect(() => {
+    if (!videoUrl) return;
+    try {
+      const key = `playback_progress_${videoUrl}`;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = parseFloat(saved);
+        // Prompt to resume if progress is > 10 seconds
+        if (parsed > 10) {
+          setSavedTime(parsed);
+          setShowResumePrompt(true);
+          const timer = setTimeout(() => {
+            setShowResumePrompt(false);
+          }, 8000);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load playback progress", e);
+    }
+    setSavedTime(null);
+    setShowResumePrompt(false);
+  }, [videoUrl]);
+
+  // Prefetch next episode manifest when 90% through current video
+  useEffect(() => {
+    if (!nextVideoUrl || duration === 0) return;
+    if (currentTime / duration >= 0.9) {
+      const linkId = `prefetch-${nextVideoUrl}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement("link");
+        link.id = linkId;
+        link.rel = "prefetch";
+        link.href = nextVideoUrl;
+        document.head.appendChild(link);
+      }
+    }
+  }, [currentTime, duration, nextVideoUrl]);
+
+  const handleResumePlayback = () => {
+    const video = videoRef.current;
+    if (video && savedTime) {
+      video.currentTime = savedTime;
+      setCurrentTime(savedTime);
+      video.play().catch(() => {});
+    }
+    setShowResumePrompt(false);
+  };
 
   // Setup HLS / Stream source
   useEffect(() => {
@@ -229,8 +297,19 @@ export default function VideoPlayer({
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video) return;
-    setCurrentTime(video.currentTime);
+    const time = video.currentTime;
+    setCurrentTime(time);
     setDuration(video.duration || 0);
+
+    // Save progress to localStorage every 5 seconds
+    if (videoUrl && Math.abs(time - lastSavedTimeRef.current) >= 5) {
+      try {
+        localStorage.setItem(`playback_progress_${videoUrl}`, time.toString());
+        lastSavedTimeRef.current = time;
+      } catch (e) {
+        // Quietly fail if localStorage is full or blocked
+      }
+    }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,6 +356,136 @@ export default function VideoPlayer({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const [isPiPSupported, setIsPiPSupported] = useState(false);
+  const [isPiPActive, setIsPiPActive] = useState(false);
+
+  // Picture-in-Picture event listeners
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && typeof document !== "undefined" && document.pictureInPictureEnabled) {
+      setIsPiPSupported(true);
+      
+      const onEnterPiP = () => setIsPiPActive(true);
+      const onLeavePiP = () => setIsPiPActive(false);
+
+      video.addEventListener("enterpictureinpicture", onEnterPiP);
+      video.addEventListener("leavepictureinpicture", onLeavePiP);
+
+      return () => {
+        video.removeEventListener("enterpictureinpicture", onEnterPiP);
+        video.removeEventListener("leavepictureinpicture", onLeavePiP);
+      };
+    }
+  }, [videoRef]);
+
+  const togglePiP = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        await video.requestPictureInPicture();
+      }
+    } catch (err) {
+      console.warn("Picture-in-Picture error:", err);
+    }
+  };
+
+  // Keyboard Hotkeys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      // Skip hotkeys if user is focusing an input or editable field (like RoomChat)
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.isContentEditable)
+      ) {
+        return;
+      }
+
+      // Tua nhanh theo phím số (0-9 hoặc Numpad 0-9) giống YouTube
+      const isNumeric = /^[0-9]$/.test(e.key);
+      const isNumpadNumeric = /^Numpad[0-9]$/.test(e.code);
+      if (isNumeric || isNumpadNumeric) {
+        e.preventDefault();
+        const num = parseInt(isNumeric ? e.key : e.code.replace("Numpad", ""), 10);
+        const percentage = num / 10;
+        const targetTime = (video.duration || 0) * percentage;
+        video.currentTime = targetTime;
+        setCurrentTime(targetTime);
+        if (onSeekSync) onSeekSync(targetTime);
+        resetControlsTimer();
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case " ":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "arrowleft":
+          e.preventDefault();
+          const newTimeLeft = Math.max(0, video.currentTime - 10);
+          video.currentTime = newTimeLeft;
+          setCurrentTime(newTimeLeft);
+          if (onSeekSync) onSeekSync(newTimeLeft);
+          resetControlsTimer();
+          break;
+        case "arrowright":
+          e.preventDefault();
+          const newTimeRight = Math.min(video.duration || 0, video.currentTime + 10);
+          video.currentTime = newTimeRight;
+          setCurrentTime(newTimeRight);
+          if (onSeekSync) onSeekSync(newTimeRight);
+          resetControlsTimer();
+          break;
+        case "arrowup":
+          e.preventDefault();
+          const newVolUp = Math.min(1, video.volume + 0.1);
+          video.volume = newVolUp;
+          setVolume(newVolUp);
+          resetControlsTimer();
+          break;
+        case "arrowdown":
+          e.preventDefault();
+          const newVolDown = Math.max(0, video.volume - 0.1);
+          video.volume = newVolDown;
+          setVolume(newVolDown);
+          resetControlsTimer();
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "m":
+          e.preventDefault();
+          const isMuted = video.volume === 0;
+          if (isMuted) {
+            video.volume = 0.5;
+            setVolume(0.5);
+          } else {
+            video.volume = 0;
+            setVolume(0);
+          }
+          resetControlsTimer();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [videoRef, togglePlay, toggleFullscreen, onSeekSync]);
+
   const handleCancelAutoNext = () => {
     setShowAutoNext(false);
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
@@ -311,6 +520,7 @@ export default function VideoPlayer({
             ref={videoRef}
             poster={poster}
             crossOrigin="anonymous"
+            playsInline
             className="w-full aspect-video relative z-10"
             onTimeUpdate={handleTimeUpdate}
             onPlay={() => {
@@ -360,6 +570,30 @@ export default function VideoPlayer({
                 className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 Hủy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Resume Playback Prompt */}
+        {showResumePrompt && savedTime && (
+          <div className="absolute bottom-20 left-4 bg-zinc-950/90 border border-zinc-800 text-white px-4 py-3 rounded-xl shadow-2xl z-30 flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Xem dở lần trước</span>
+              <span className="text-xs font-semibold text-white">Xem tiếp từ {formatTime(savedTime)}?</span>
+            </div>
+            <div className="flex items-center gap-1.5 ml-2">
+              <button
+                onClick={handleResumePlayback}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 shadow-md"
+              >
+                Xem tiếp
+              </button>
+              <button
+                onClick={() => setShowResumePrompt(false)}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700/50"
+              >
+                Bỏ qua
               </button>
             </div>
           </div>
@@ -431,6 +665,20 @@ export default function VideoPlayer({
                 </button>
 
 
+
+                {/* Picture-in-Picture button */}
+                {isPiPSupported && (
+                  <button
+                    onClick={togglePiP}
+                    className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${isPiPActive ? "text-blue-400" : "text-zinc-500"}`}
+                    title="Xem trong cửa sổ nổi (Picture-in-Picture)"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a2 2 0 012 2v5a2 2 0 01-2 2h-5a2 2 0 01-2-2v-5a2 2 0 012-2h5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 21a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v3" />
+                    </svg>
+                  </button>
+                )}
 
                 {/* Fullscreen button */}
                 <button

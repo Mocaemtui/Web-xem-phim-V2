@@ -12,12 +12,15 @@ import type {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://ophim1.com";
 
-export async function fetchAPI<T>(endpoint: string): Promise<ApiResponse<T> | null> {
+export async function fetchAPI<T>(
+  endpoint: string,
+  revalidate: number = 3600
+): Promise<ApiResponse<T> | null> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     
     const response = await fetch(url, {
-      next: { revalidate: 3600 }, // Cache API trong 1 giờ để tăng tốc độ tải trang
+      next: { revalidate }, // Cache API theo thời gian cấu hình
     });
 
     if (!response.ok) {
@@ -117,15 +120,18 @@ export async function getPhimTrung(
 export async function searchPhim(
   keyword: string
 ): Promise<ApiResponse<MovieListResponse> | null> {
-  return fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`);
+  // Tìm kiếm cần cập nhật nhanh, cache 60 giây
+  return fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`, 60);
 }
 
 export async function getTheLoai(): Promise<ApiResponse<{ items: Genre[] }> | null> {
-  return fetchAPI<{ items: Genre[] }>("/v1/api/the-loai");
+  // Danh mục thể loại cố định, cache 24 giờ
+  return fetchAPI<{ items: Genre[] }>("/v1/api/the-loai", 86400);
 }
 
 export async function getQuocGia(): Promise<ApiResponse<{ items: Country[] }> | null> {
-  return fetchAPI<{ items: Country[] }>("/v1/api/quoc-gia");
+  // Danh sách quốc gia cố định, cache 24 giờ
+  return fetchAPI<{ items: Country[] }>("/v1/api/quoc-gia", 86400);
 }
 
 // Search with optional pagination
@@ -138,7 +144,8 @@ export async function searchPhimWithPagination(
   if (options.page !== undefined) params.append('page', options.page.toString());
   if (options.limit !== undefined) params.append('limit', options.limit.toString());
   const endpoint = `/v1/api/tim-kiem?${params.toString()}`;
-  return fetchAPI<MovieListResponse>(endpoint);
+  // Tìm kiếm phân trang, cache 60 giây
+  return fetchAPI<MovieListResponse>(endpoint, 60);
 }
 
 // Get category details with filters
@@ -188,7 +195,8 @@ export async function getQuocGiaDetails(
 }
 
 export async function getNamPhatHanh(): Promise<ApiResponse<{ items: Year[] }> | null> {
-  return fetchAPI<{ items: Year[] }>("/v1/api/nam-phat-hanh");
+  // Danh sách năm phát hành cố định, cache 24 giờ
+  return fetchAPI<{ items: Year[] }>("/v1/api/nam-phat-hanh", 86400);
 }
 export async function getDanhSach(
   slug: string,
@@ -219,19 +227,22 @@ export async function getDanhSach(
 export async function getChiTietPhim(
   slug: string
 ): Promise<ApiResponse<{ item: MovieDetail }> | null> {
-  return fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`);
+  // Chi tiết phim rất ít thay đổi, cache 24 giờ để tăng tốc truy cập
+  return fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400);
 }
 
 export async function getHinhAnhPhim(
   slug: string
 ): Promise<ApiResponse<MovieImages> | null> {
-  return fetchAPI<MovieImages>(`/v1/api/phim/${slug}/images`);
+  // Hình ảnh phim phụ trợ, cache 24 giờ
+  return fetchAPI<MovieImages>(`/v1/api/phim/${slug}/images`, 86400);
 }
 
 export async function getPeoplesPhim(
   slug: string
 ): Promise<ApiResponse<MoviePeoples> | null> {
-  return fetchAPI<MoviePeoples>(`/v1/api/phim/${slug}/peoples`);
+  // Diễn viên/Đạo diễn, cache 24 giờ
+  return fetchAPI<MoviePeoples>(`/v1/api/phim/${slug}/peoples`, 86400);
 }
 
 export async function getPhimByTheLoai(

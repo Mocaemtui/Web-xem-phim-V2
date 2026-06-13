@@ -34,6 +34,11 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://img.ophim.live" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://ophim1.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-full flex flex-col bg-zinc-950">
         <Header />
         <PageTransition>{children}</PageTransition>

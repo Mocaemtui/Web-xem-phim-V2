@@ -1,10 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import VideoPlayer from "@/components/VideoPlayer";
+import dynamic from "next/dynamic";
 import EpisodeSelector from "@/components/EpisodeSelector";
 import type { MovieDetail } from "@/types/api";
 import { saveWatchHistory, getWatchHistory } from "@/lib/watchHistory";
+
+const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+      <div className="text-zinc-500 animate-pulse">Đang khởi tạo trình phát video...</div>
+    </div>
+  )
+});
 
 interface WatchPageClientProps {
   movie: MovieDetail;
@@ -68,6 +77,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
               videoUrl={currentEpisode.link_m3u8}
               embedUrl={currentEpisode.link_embed}
               hasNextEpisode={currentEpisodeIndex < serverData.length - 1}
+              nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
               onAutoNext={() => {
                 if (currentEpisodeIndex < serverData.length - 1) {
                   setCurrentEpisodeIndex((prev) => prev + 1);

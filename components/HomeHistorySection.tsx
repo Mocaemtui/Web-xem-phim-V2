@@ -41,9 +41,8 @@ export default function HomeHistorySection() {
                 }
                 alt={item.name}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="object-cover transition-transform duration-300 group-hover:scale-105 will-change-transform"
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
-                unoptimized
               />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Play className="w-12 h-12 text-white fill-white" />

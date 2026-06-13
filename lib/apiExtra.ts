@@ -11,7 +11,7 @@ export async function searchPhimWithPagination(
   if (options.page !== undefined) params.append('page', options.page.toString());
   if (options.limit !== undefined) params.append('limit', options.limit.toString());
   const endpoint = `/v1/api/tim-kiem?${params.toString()}`;
-  return fetchAPI<MovieListResponse>(endpoint);
+  return fetchAPI<MovieListResponse>(endpoint, 60);
 }
 
 // Get category list (already exists in lib/api as getTheLoai)

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import VideoPlayer from "@/components/VideoPlayer";
-import RoomChat from "@/components/RoomChat";
-import { useWatchTogether } from "@/hooks/useWatchTogether";
+import dynamic from "next/dynamic";
 import type { MovieDetail } from "@/types/api";
 import { Users, Copy, Check, RefreshCw, Smile } from "lucide-react";
 import EpisodeSelector from "@/components/EpisodeSelector";
-import FloatingReactions from "@/components/FloatingReactions";
+import { useWatchTogether } from "@/hooks/useWatchTogether";
+
+const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), { ssr: false });
+const RoomChat = dynamic(() => import("@/components/RoomChat"), { ssr: false });
+const FloatingReactions = dynamic(() => import("@/components/FloatingReactions"), { ssr: false });
 
 interface WatchTogetherClientProps {
   movie: MovieDetail;
@@ -22,6 +24,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   const [currentServerIndex, setCurrentServerIndex] = useState(0);
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
+  const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "episodes" | "watchers">("chat");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
@@ -187,24 +190,26 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col md:flex-row overflow-x-hidden">
-      <div className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <h1 className="text-xl md:text-2xl font-bold text-white">
+    <div className="h-[100dvh] md:min-h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden md:overflow-y-auto">
+      {/* Left Area: Video Player & Controls */}
+      <div className="flex-1 flex flex-col h-full md:h-auto overflow-hidden md:overflow-visible p-3 md:p-6">
+        {/* Title and Share Link */}
+        <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
+          <h1 className="text-base md:text-2xl font-bold text-white line-clamp-1">
             {movie.name} - Tập {currentEpisodeIndex + 1}
           </h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={copyLink}
-              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm transition-colors border border-zinc-700"
-            >
-              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              {copied ? "Đã copy" : "Mời bạn bè"}
-            </button>
-          </div>
+          <button
+            onClick={copyLink}
+            className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-xs transition-all border border-zinc-800"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+            <span className="hidden xs:inline">{copied ? "Đã copy" : "Mời"}</span>
+            <span className="inline xs:hidden">{copied ? "Đã copy" : "Mời bạn"}</span>
+          </button>
         </div>
 
-        <div className="mb-6 relative">
+        {/* Video Player */}
+        <div className="relative shrink-0 mb-3 md:mb-6">
           {currentEpisode ? (
             <>
               <FloatingReactions reactions={reactions} />
@@ -212,6 +217,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 externalVideoRef={videoRef}
                 poster={posterUrl}
                 videoUrl={currentEpisode.link_m3u8}
+                nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
                 onPlaySync={() => {
                   if (!isReceivingEvent.current && videoRef.current) triggerPlay(videoRef.current.currentTime);
                 }}
@@ -238,25 +244,119 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           )}
         </div>
 
-        {episodes.length > 0 && serverData.length > 0 && (
-          <EpisodeSelector
-            episodes={episodes}
-            currentServerIndex={currentServerIndex}
-            currentEpisodeIndex={currentEpisodeIndex}
-            onSelectEpisode={(idx) => {
-              setCurrentEpisodeIndex(idx);
-              triggerChangeEpisode(currentServerIndex, idx);
-            }}
-            onSelectServer={(idx) => {
-              setCurrentServerIndex(idx);
-              setCurrentEpisodeIndex(0);
-              triggerChangeEpisode(idx, 0);
-            }}
-          />
-        )}
+        {/* Desktop-only Episode Selector */}
+        <div className="hidden md:block overflow-y-auto">
+          {episodes.length > 0 && serverData.length > 0 && (
+            <EpisodeSelector
+              episodes={episodes}
+              currentServerIndex={currentServerIndex}
+              currentEpisodeIndex={currentEpisodeIndex}
+              onSelectEpisode={(idx) => {
+                setCurrentEpisodeIndex(idx);
+                triggerChangeEpisode(currentServerIndex, idx);
+              }}
+              onSelectServer={(idx) => {
+                setCurrentServerIndex(idx);
+                setCurrentEpisodeIndex(0);
+                triggerChangeEpisode(idx, 0);
+              }}
+            />
+          )}
+        </div>
+
+        {/* Mobile-only Tabs Navigation */}
+        <div className="flex md:hidden border-b border-zinc-800 bg-zinc-900/30 rounded-t-xl shrink-0">
+          <button
+            onClick={() => setActiveMobileTab("chat")}
+            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "chat" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+          >
+            Trò chuyện
+          </button>
+          <button
+            onClick={() => setActiveMobileTab("episodes")}
+            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "episodes" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+          >
+            Tập phim
+          </button>
+          <button
+            onClick={() => setActiveMobileTab("watchers")}
+            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "watchers" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+          >
+            Người xem ({watchers.length})
+          </button>
+        </div>
+
+        {/* Mobile Tab Content Container */}
+        <div className="flex-1 min-h-0 overflow-y-auto md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col">
+          {activeMobileTab === "chat" && (
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Emojis Reaction bar inside mobile chat tab */}
+              {isJoined && (
+                <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-900/40 rounded-lg border border-zinc-800/60 mb-2 shrink-0 overflow-x-auto no-scrollbar">
+                  {EMOJIS.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => triggerReaction(emoji)}
+                      className="text-lg hover:scale-125 active:scale-95 transition-all cursor-pointer"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex-1 min-h-0">
+                <RoomChat 
+                  messages={messages} 
+                  typingUsers={typingUsers}
+                  onSendMessage={sendMessage} 
+                  onTyping={triggerTyping}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeMobileTab === "episodes" && (
+            <div className="flex-1 overflow-y-auto">
+              {episodes.length > 0 && serverData.length > 0 && (
+                <EpisodeSelector
+                  episodes={episodes}
+                  currentServerIndex={currentServerIndex}
+                  currentEpisodeIndex={currentEpisodeIndex}
+                  onSelectEpisode={(idx) => {
+                    setCurrentEpisodeIndex(idx);
+                    triggerChangeEpisode(currentServerIndex, idx);
+                  }}
+                  onSelectServer={(idx) => {
+                    setCurrentServerIndex(idx);
+                    setCurrentEpisodeIndex(0);
+                    triggerChangeEpisode(idx, 0);
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {activeMobileTab === "watchers" && (
+            <div className="flex-1 overflow-y-auto space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-blue-400" />
+                <h3 className="font-semibold text-white text-sm">Danh sách người đang xem</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {watchers.map((w) => (
+                  <div key={w.id} className="flex items-center gap-1.5 bg-zinc-800 px-3 py-1.5 rounded-full text-xs">
+                    <span className="text-zinc-200">{w.name}</span>
+                    {w.name === username && <span className="text-zinc-500">(Bạn)</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="w-full md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-950 flex flex-col h-[500px] md:h-screen">
+      {/* Right Area: Desktop Sidebar */}
+      <div className="hidden md:flex w-80 lg:w-96 border-l border-zinc-800 bg-zinc-950 flex-col h-screen shrink-0">
         <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
