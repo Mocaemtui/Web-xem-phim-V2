@@ -58,6 +58,18 @@ export default function VideoPlayer({
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
+  // Aspect Ratio & Zoom Mode (Normal, 1.15x Zoom, 1.33x Zoom, Stretch)
+  const [zoomMode, setZoomMode] = useState<"normal" | "zoom1" | "zoom2" | "stretch">("normal");
+
+  const toggleZoomMode = () => {
+    setZoomMode((prev) => {
+      if (prev === "normal") return "zoom1";
+      if (prev === "zoom1") return "zoom2";
+      if (prev === "zoom2") return "stretch";
+      return "normal";
+    });
+  };
+  
   // Progress Save & Resume Watch
   const [savedTime, setSavedTime] = useState<number | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -564,6 +576,11 @@ export default function VideoPlayer({
             playsInline
             onClick={togglePlay}
             className="w-full aspect-video relative z-10 cursor-pointer"
+            style={{
+              objectFit: zoomMode === "stretch" ? "fill" : zoomMode === "zoom1" || zoomMode === "zoom2" ? "cover" : "contain",
+              transform: zoomMode === "zoom1" ? "scale(1.15)" : zoomMode === "zoom2" ? "scale(1.33)" : "scale(1)",
+              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), object-fit 0.3s ease"
+            }}
             onTimeUpdate={handleTimeUpdate}
             onPlay={() => {
               setIsPlaying(true);
@@ -695,6 +712,22 @@ export default function VideoPlayer({
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Aspect Ratio / Zoom Toggle */}
+                <button
+                  onClick={toggleZoomMode}
+                  className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${zoomMode !== "normal" ? "text-blue-400" : "text-zinc-500"}`}
+                  title={
+                    zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" :
+                    zoomMode === "zoom1" ? "Tỉ lệ: Phóng to nhẹ (1.15x)" :
+                    zoomMode === "zoom2" ? "Tỉ lệ: Phóng to mạnh (1.33x)" :
+                    "Tỉ lệ: Kéo giãn đầy khung"
+                  }
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
+                  </svg>
+                </button>
+
                 {/* Ambient Light Toggle */}
                 <button
                   onClick={handleAmbientToggle}
