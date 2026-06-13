@@ -835,6 +835,27 @@ export default function VideoPlayer({
           </div>
         )}
 
+        {/* Skip Intro Button */}
+        {videoUrl && currentTime < 85 && duration > 85 && (
+          <div className="absolute bottom-20 right-4 z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoRef.current) {
+                  videoRef.current.currentTime = 85;
+                  if (onSeekSync) onSeekSync(85);
+                }
+              }}
+              className="bg-zinc-900/80 hover:bg-white hover:text-black text-white border border-white/20 px-4 py-2 rounded-md font-semibold text-sm transition-all shadow-xl backdrop-blur flex items-center gap-2 group cursor-pointer"
+            >
+              <span>Bỏ qua giới thiệu</span>
+              <svg className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Resume Playback Prompt */}
         {showResumePrompt && savedTime && (
           <div className="absolute bottom-20 left-4 bg-zinc-950/90 border border-zinc-800 text-white px-4 py-3 rounded-xl shadow-2xl z-30 flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
