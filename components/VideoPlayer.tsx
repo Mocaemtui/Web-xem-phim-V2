@@ -836,22 +836,26 @@ export default function VideoPlayer({
         )}
 
         {/* Skip Intro Button */}
-        {videoUrl && currentTime < 85 && duration > 85 && (
-          <div className="absolute bottom-20 right-4 z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+        {videoUrl && currentTime > 2 && currentTime < 85 && (
+          <div className="absolute bottom-20 right-4 z-30 animate-in fade-in slide-in-from-right-4 duration-300">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (videoRef.current) {
-                  videoRef.current.currentTime = 85;
-                  if (onSeekSync) onSeekSync(85);
+                const video = videoRef.current;
+                if (video) {
+                  // Skip to 85s or 90s
+                  const targetTime = 90;
+                  video.currentTime = targetTime;
+                  setCurrentTime(targetTime);
+                  if (onSeekSync) onSeekSync(targetTime);
                 }
               }}
-              className="bg-zinc-900/80 hover:bg-white hover:text-black text-white border border-white/20 px-4 py-2 rounded-md font-semibold text-sm transition-all shadow-xl backdrop-blur flex items-center gap-2 group cursor-pointer"
+              className="bg-zinc-950/80 hover:bg-zinc-800 text-white border border-zinc-700/80 px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2 backdrop-blur-md shadow-2xl hover:scale-105 active:scale-95"
             >
-              <span>Bỏ qua giới thiệu</span>
-              <svg className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
               </svg>
+              Bỏ qua giới thiệu
             </button>
           </div>
         )}

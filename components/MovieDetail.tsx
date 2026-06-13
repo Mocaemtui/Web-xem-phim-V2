@@ -140,7 +140,7 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
       {/* Backdrop */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 group">
         <img
-          src={backdropUrl}
+          src={`/api/proxy-image?url=${encodeURIComponent(backdropUrl)}`}
           alt={movie.name}
           onDoubleClick={tmdbBackdropUrl ? toggleBackdrop : undefined}
           className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${backdropFade ? "opacity-100" : "opacity-0"}`}
@@ -162,7 +162,7 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
           <div className="hidden md:block">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl group bg-zinc-900">
               <img
-                src={posterUrl}
+                src={`/api/proxy-image?url=${encodeURIComponent(posterUrl)}`}
                 alt={movie.name}
                 onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                 className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
@@ -181,7 +181,7 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
             <div className="md:hidden">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900">
                 <img
-                  src={posterUrl}
+                  src={`/api/proxy-image?url=${encodeURIComponent(posterUrl)}`}
                   alt={movie.name}
                   onDoubleClick={tmdbPosterUrl ? togglePoster : undefined}
                   className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
