@@ -381,7 +381,12 @@ export async function getChiTietPhim(
     fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url)
   ]);
 
-  let baseMovie: MovieDetail | null = ophimRes?.data?.item || phimapiRes?.data?.item || null;
+  let baseMovie: MovieDetail | null = null;
+  if (PRIMARY_SOURCE.id === 'phimapi') {
+    baseMovie = phimapiRes?.data?.item || ophimRes?.data?.item || null;
+  } else {
+    baseMovie = ophimRes?.data?.item || phimapiRes?.data?.item || null;
+  }
 
   // --- SMART CROSS-API MATCHING (FALLBACK) ---
   if (baseMovie) {
