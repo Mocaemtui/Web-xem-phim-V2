@@ -41,6 +41,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
 
   // Reset trạng thái khi chuyển phim mới
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsRestored(false);
     setCurrentEpisodeIndex(0);
     setEpisodes(movie.episodes || []);
@@ -73,6 +74,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
         
         if (tapParam || serverParam) {
           if (episodes?.[sIdx]?.server_data?.[tIdx]) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCurrentServerIndex(sIdx);
             setCurrentEpisodeIndex(tIdx);
             setIsRestored(true);
