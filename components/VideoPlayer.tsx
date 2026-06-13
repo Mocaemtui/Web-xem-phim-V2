@@ -521,7 +521,8 @@ export default function VideoPlayer({
             poster={poster}
             crossOrigin="anonymous"
             playsInline
-            className="w-full aspect-video relative z-10"
+            onClick={togglePlay}
+            className="w-full aspect-video relative z-10 cursor-pointer"
             onTimeUpdate={handleTimeUpdate}
             onPlay={() => {
               setIsPlaying(true);

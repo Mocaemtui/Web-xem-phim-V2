@@ -60,25 +60,26 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   // Sync ambient light canvas
   useEffect(() => {
-    const video = videoRef.current;
-    const canvas1 = ambientCanvasRef.current;
-    const canvas2 = chatAmbientCanvasRef.current;
-    if (!video || !isJoined) return;
-
-    const ctx1 = canvas1 ? canvas1.getContext("2d", { willReadFrequently: false }) : null;
-    const ctx2 = canvas2 ? canvas2.getContext("2d", { willReadFrequently: false }) : null;
-
     let animationFrameId: number;
     let lastDrawTime = 0;
 
     const drawFrame = (now: number) => {
-      if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
-        try {
-          if (canvas1 && ctx1) ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
-          if (canvas2 && ctx2) ctx2.drawImage(video, 0, 0, canvas2.width, canvas2.height);
-          lastDrawTime = now;
-        } catch (err) {
-          // Ignore CORS
+      const video = videoRef.current;
+      const canvas1 = ambientCanvasRef.current;
+      const canvas2 = chatAmbientCanvasRef.current;
+
+      if (video && isJoined) {
+        const ctx1 = canvas1 ? canvas1.getContext("2d", { willReadFrequently: false }) : null;
+        const ctx2 = canvas2 ? canvas2.getContext("2d", { willReadFrequently: false }) : null;
+
+        if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
+          try {
+            if (canvas1 && ctx1) ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+            if (canvas2 && ctx2) ctx2.drawImage(video, 0, 0, canvas2.width, canvas2.height);
+            lastDrawTime = now;
+          } catch (err) {
+            // Ignore CORS
+          }
         }
       }
       animationFrameId = requestAnimationFrame(drawFrame);
@@ -90,6 +91,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       cancelAnimationFrame(animationFrameId);
     };
   }, [isJoined]);
+
 
   useEffect(() => {
     if (isTheaterMode) {
@@ -520,23 +522,20 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           style={{ zIndex: 0 }}
         />
 
-        <div className="p-4 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
-
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-400" />
-              <h2 className="font-semibold text-white">Người đang xem ({watchers.length})</h2>
+        <div className="p-2.5 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-400 shrink-0" />
+            <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto flex-1">
+              {watchers.map((w) => (
+                <div key={w.id} className="flex items-center gap-1 bg-zinc-800/60 px-2 py-0.5 rounded-full text-xs text-zinc-300">
+                  <span>{w.name}</span>
+                  {w.name === username && <span className="text-[10px] text-zinc-500 font-medium ml-0.5">(bạn)</span>}
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-            {watchers.map((w) => (
-              <div key={w.id} className="flex items-center gap-1.5 bg-zinc-800 px-3 py-1.5 rounded-full text-sm">
-                <span className="text-zinc-200">{w.name}</span>
-                {w.name === username && <span className="text-xs text-zinc-500">(Bạn)</span>}
-              </div>
-            ))}
-          </div>
         </div>
+
 
         {/* Reaction Bar */}
         {isJoined && (
