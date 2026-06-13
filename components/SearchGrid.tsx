@@ -14,20 +14,7 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
   const [selectedSource, setSelectedSource] = useState<string>("all");
   const [lastKeyword, setLastKeyword] = useState("");
 
-  // Smart default tab selection on keyword change or when movies are loaded
-  useEffect(() => {
-    if (keyword !== lastKeyword && movies.length > 0) {
-      const availableSources = new Set(movies.map((m: any) => m.source));
-      if (availableSources.has("ophim")) {
-        setSelectedSource("ophim");
-      } else if (availableSources.has("phimapi")) {
-        setSelectedSource("phimapi");
-      } else {
-        setSelectedSource("all");
-      }
-      setLastKeyword(keyword);
-    }
-  }, [keyword, movies, lastKeyword]);
+  // No smart default selection needed, always default to "all" as requested by user
 
 
   const filteredMovies = useMemo(() => {
