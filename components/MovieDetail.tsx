@@ -71,11 +71,66 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
 
   const router = useRouter();
   const [historyItem, setHistoryItem] = useState<any>(null);
+  const [episodes, setEpisodes] = useState(movie.episodes || []);
 
   useEffect(() => {
     const history = getWatchHistory();
     const item = history.find((i: any) => i.slug === movie.slug);
     if (item) setHistoryItem(item);
+  }, [movie.slug]);
+
+  // Client-side fetch for NguonC to bypass Vercel DataCenter Cloudflare blocks
+  useEffect(() => {
+    const fetchNguonC = async () => {
+      try {
+        let res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
+        let data = res.ok ? await res.json() : null;
+
+        // --- SMART CROSS-API MATCHING (FALLBACK) ---
+        if (!data?.movie?.episodes) {
+          const originName = movie.origin_name || movie.name;
+          if (originName) {
+            const searchRes = await fetch(`https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(originName)}`);
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              const match = searchData?.items?.find((m: any) => 
+                (m.original_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
+              );
+              if (match && match.slug !== movie.slug) {
+                res = await fetch(`https://phim.nguonc.com/api/film/${match.slug}`);
+                data = res.ok ? await res.json() : null;
+              }
+            }
+          }
+        }
+        
+        if (data?.movie?.episodes) {
+          const nguonCEps = data.movie.episodes.map((epServer: any) => ({
+            server_name: `NguonC - ${epServer.server_name}`,
+            server_data: epServer.items.map((item: any) => ({
+              name: item.name,
+              slug: item.slug,
+              filename: item.name,
+              link: "",
+              link_embed: item.embed,
+              link_m3u8: "" // NguonC always empty for iframe fallback
+            }))
+          }));
+          
+          setEpisodes(prev => {
+            if (prev.some(e => e.server_name.startsWith('NguonC'))) return prev;
+            return [...prev, ...nguonCEps];
+          });
+        }
+      } catch (error) {
+        console.error("Lỗi tải NguonC (Client):", error);
+      }
+    };
+
+    if (!episodes.some(e => e.server_name.startsWith('NguonC'))) {
+      fetchNguonC();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie.slug]);
 
   return (
@@ -258,11 +313,11 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
 
             {/* Watch Buttons or Trailer Info */}
             <div className="flex flex-wrap gap-4 mt-2">
-              {movie.episodes && 
-              movie.episodes.length > 0 && 
-              movie.episodes[0].server_data && 
-              movie.episodes[0].server_data.length > 0 &&
-              movie.episodes[0].server_data[0].link_m3u8 ? (
+              {episodes && 
+              episodes.length > 0 && 
+              episodes[0].server_data && 
+              episodes[0].server_data.length > 0 &&
+              (episodes[0].server_data[0].link_m3u8 || episodes[0].server_data[0].link_embed) ? (
                 <>
                   {movie.slug && (
                     <Link
@@ -335,12 +390,12 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
                 </div>
               )}
             </div>
-
+ 
             {/* Episode Selector for Series Movies directly in Detail Page */}
-            {movie.episodes && movie.episodes.length > 0 && (
+            {episodes && episodes.length > 0 && (
               <div className="mt-8 border-t border-zinc-900 pt-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Danh sách tập phim</h3>
-                {movie.episodes.map((server: any, sIdx: number) => (
+                {episodes.map((server: any, sIdx: number) => (
                   <div key={sIdx} className="mb-6">
                     <p className="text-zinc-400 mb-2 font-medium">{server.server_name}</p>
                     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
