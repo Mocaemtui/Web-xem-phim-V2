@@ -31,6 +31,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const ambientCanvasRef = useRef<HTMLCanvasElement>(null);
+  const chatAmbientCanvasRef = useRef<HTMLCanvasElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
   const isResizing = useRef(false);
   const currentServerIndexRef = useRef(currentServerIndex);
@@ -60,11 +61,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   // Sync ambient light canvas
   useEffect(() => {
     const video = videoRef.current;
-    const canvas = ambientCanvasRef.current;
-    if (!video || !canvas || !isJoined) return;
+    const canvas1 = ambientCanvasRef.current;
+    const canvas2 = chatAmbientCanvasRef.current;
+    if (!video || !isJoined) return;
 
-    const ctx = canvas.getContext("2d", { willReadFrequently: false });
-    if (!ctx) return;
+    const ctx1 = canvas1 ? canvas1.getContext("2d", { willReadFrequently: false }) : null;
+    const ctx2 = canvas2 ? canvas2.getContext("2d", { willReadFrequently: false }) : null;
 
     let animationFrameId: number;
     let lastDrawTime = 0;
@@ -72,7 +74,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     const drawFrame = (now: number) => {
       if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
         try {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          if (canvas1 && ctx1) ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+          if (canvas2 && ctx2) ctx2.drawImage(video, 0, 0, canvas2.width, canvas2.height);
           lastDrawTime = now;
         } catch (err) {
           // Ignore CORS
@@ -505,10 +508,20 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className="hidden md:flex bg-transparent flex-col h-screen shrink-0 z-10 p-3 md:p-4 gap-3"
+        className="hidden md:flex bg-transparent flex-col h-screen shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
         style={{ width: `${chatWidth}px` }}
       >
-        <div className="p-4 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0">
+        {/* Chat Area Ambient Canvas */}
+        <canvas
+          ref={chatAmbientCanvasRef}
+          width="16"
+          height="9"
+          className="absolute inset-0 w-full h-full blur-[110px] opacity-50 pointer-events-none transition-all duration-700"
+          style={{ zIndex: 0 }}
+        />
+
+        <div className="p-4 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
+
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-400" />
@@ -527,7 +540,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Reaction Bar */}
         {isJoined && (
-          <div className="px-4 py-2 bg-zinc-900/20 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0">
+          <div className="px-4 py-2 bg-zinc-900/20 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0 relative z-10">
             <div className="flex flex-wrap items-center gap-2 justify-center py-2 bg-zinc-900/40 rounded-lg border border-zinc-800/60">
               {EMOJIS.map(emoji => (
                 <button
@@ -542,7 +555,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </div>
         )}
 
-        <div className="flex-1 overflow-hidden p-0">
+        <div className="flex-1 overflow-hidden p-0 relative z-10">
           <RoomChat 
             messages={messages} 
             typingUsers={typingUsers}
@@ -551,6 +564,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           />
         </div>
       </div>
+
 
     </div>
   );
