@@ -194,17 +194,16 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Left Area: Video Player & Controls */}
       <div className="flex-1 flex flex-col h-full md:h-auto overflow-hidden md:overflow-visible p-3 md:p-6">
         {/* Title and Share Link */}
-        <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
-          <h1 className="text-base md:text-2xl font-bold text-white line-clamp-1">
+        <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
+          <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
             {movie.name} - Tập {currentEpisodeIndex + 1}
           </h1>
           <button
             onClick={copyLink}
-            className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-xs transition-all border border-zinc-800"
+            className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-850 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="hidden xs:inline">{copied ? "Đã copy" : "Mời"}</span>
-            <span className="inline xs:hidden">{copied ? "Đã copy" : "Mời bạn"}</span>
+            <span>{copied ? "Đã copy" : "Mời bạn"}</span>
           </button>
         </div>
 
@@ -287,7 +286,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         </div>
 
         {/* Mobile Tab Content Container */}
-        <div className="flex-1 min-h-0 overflow-y-auto md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col">
+        <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           {activeMobileTab === "chat" && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* Emojis Reaction bar inside mobile chat tab */}
