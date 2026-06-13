@@ -500,16 +500,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   }, [isJoined, currentEpisode, roomId]);
 
   const handleSelectEpisode = (idx: number) => {
-    hasSynced.current = false;
-    hasRequestedSyncAfterEpisodeChange.current = false;
+    hasSynced.current = true;
+    pendingSyncTimeRef.current = 0;
+    pendingSyncPlayingRef.current = true;
     isReceivingEvent.current = true;
     setCurrentEpisodeIndex(idx);
     triggerChangeEpisode(currentServerIndex, idx);
   };
 
   const handleSelectServer = (idx: number) => {
-    hasSynced.current = false;
-    hasRequestedSyncAfterEpisodeChange.current = false;
+    hasSynced.current = true;
+    pendingSyncTimeRef.current = 0;
+    pendingSyncPlayingRef.current = true;
     isReceivingEvent.current = true;
     setCurrentServerIndex(idx);
     setCurrentEpisodeIndex(0);
@@ -782,8 +784,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 onAutoNext={() => {
                   if (currentEpisodeIndex < serverData.length - 1) {
                     const nextIdx = currentEpisodeIndex + 1;
-                    setCurrentEpisodeIndex(nextIdx);
-                    triggerChangeEpisode(currentServerIndex, nextIdx);
+                    handleSelectEpisode(nextIdx);
                   }
                 }}
               />
