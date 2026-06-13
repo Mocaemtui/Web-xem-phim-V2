@@ -74,7 +74,7 @@ export async function getChiTietPhimNguonC(slug: string): Promise<MovieDetail | 
         filename: ep.name,
         link: "",
         link_embed: ep.embed,
-        link_m3u8: ep.m3u8,
+        link_m3u8: "", // NguonC blocks m3u8 CORS, force iframe embed fallback
       })) || []
     };
   }) || [];
