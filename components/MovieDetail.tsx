@@ -41,16 +41,34 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const hasAltPoster = Boolean(altThumbUrl && altThumbUrl !== primaryThumbUrl);
 
   const availableBackdrops = [primaryPosterUrl];
-  if (tmdbBackdropUrl) availableBackdrops.push(tmdbBackdropUrl);
-  if (hasAltBackdrop) availableBackdrops.push(altPosterUrl!);
+  const backdropNames = ["PhimAPI"];
+  if (tmdbBackdropUrl) {
+    availableBackdrops.push(tmdbBackdropUrl);
+    backdropNames.push("TMDB");
+  }
+  if (hasAltBackdrop) {
+    availableBackdrops.push(altPosterUrl!);
+    backdropNames.push("Ophim");
+  }
 
   const availablePosters = [primaryThumbUrl];
-  if (tmdbPosterUrl) availablePosters.push(tmdbPosterUrl);
-  if (hasAltPoster) availablePosters.push(altThumbUrl!);
+  const posterNames = ["PhimAPI"];
+  if (tmdbPosterUrl) {
+    availablePosters.push(tmdbPosterUrl);
+    posterNames.push("TMDB");
+  }
+  if (hasAltPoster) {
+    availablePosters.push(altThumbUrl!);
+    posterNames.push("Ophim");
+  }
 
   // Current active images
-  const currentBackdropUrl = availableBackdrops[backdropSource % availableBackdrops.length];
-  const currentPosterUrl = availablePosters[posterSource % availablePosters.length];
+  const currentBackdropIndex = backdropSource % availableBackdrops.length;
+  const currentPosterIndex = posterSource % availablePosters.length;
+  const currentBackdropUrl = availableBackdrops[currentBackdropIndex];
+  const currentPosterUrl = availablePosters[currentPosterIndex];
+  const currentBackdropName = backdropNames[currentBackdropIndex];
+  const currentPosterName = posterNames[currentPosterIndex];
 
   // Transition states
   const [backdropFade, setBackdropFade] = useState(true);
@@ -110,7 +128,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
         {availableBackdrops.length > 1 && (
           <div className="hidden md:flex absolute top-0 right-0 w-48 h-48 z-30 group/corner items-start justify-end p-4">
             <div className="opacity-0 invisible group-hover/corner:opacity-100 group-hover/corner:visible pointer-events-none group-hover/corner:pointer-events-auto transition-all duration-300">
-              <ImageToggle onToggle={toggleBackdrop} label={`Đổi ảnh nền (1/${availableBackdrops.length})`} />
+              <ImageToggle onToggle={toggleBackdrop} label={`Đổi ảnh nền (${currentBackdropName}: ${currentBackdropIndex + 1}/${availableBackdrops.length})`} />
             </div>
           </div>
         )}
@@ -129,7 +147,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
               />
               {availablePosters.length > 1 && (
                 <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 invisible group-hover:visible pointer-events-none group-hover:pointer-events-auto transition-all duration-300">
-                  <ImageToggle onToggle={togglePoster} label={`Đổi ảnh poster (1/${availablePosters.length})`} />
+                  <ImageToggle onToggle={togglePoster} label={`Đổi ảnh poster (${currentPosterName}: ${currentPosterIndex + 1}/${availablePosters.length})`} />
                 </div>
               )}
             </div>
