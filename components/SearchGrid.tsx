@@ -12,7 +12,7 @@ interface SearchGridProps {
 export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
   const [isLoadingNguonC, setIsLoadingNguonC] = useState(true);
-  const [selectedSource, setSelectedSource] = useState<string>("all");
+  const [selectedSource, setSelectedSource] = useState<string>("ophim");
 
   useEffect(() => {
     const fetchNguonC = async () => {
@@ -75,10 +75,17 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
-  const filteredMovies = movies.filter((movie: any) => {
-    if (selectedSource === "all") return true;
-    return movie.source === selectedSource;
-  });
+  const filteredMovies = [...movies]
+    .sort((a: any, b: any) => {
+      const priority = { ophim: 3, phimapi: 2, nguonc: 1 } as any;
+      const priorityA = priority[a.source] || 0;
+      const priorityB = priority[b.source] || 0;
+      return priorityB - priorityA;
+    })
+    .filter((movie: any) => {
+      if (selectedSource === "all") return true;
+      return movie.source === selectedSource;
+    });
 
   const sourceFilters = [
     { id: "all", name: "Tất cả" },
