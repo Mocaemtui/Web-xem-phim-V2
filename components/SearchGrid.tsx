@@ -52,18 +52,48 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
   }, [keyword]);
 
   const filteredMovies = useMemo(() => {
+    const getSmartKey = (item: Movie) => {
+      const originName = item.origin_name || item.name || '';
+      const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
+      return `${normalizedOriginName}-${item.year || 'unknown'}`;
+    };
+
+    // 1. Build maps of priority sources (Ophim, PhimAPI)
+    const ophimMap = new Map<string, Movie>();
+    const phimapiMap = new Map<string, Movie>();
+
+    movies.forEach(movie => {
+      const key = getSmartKey(movie);
+      if (movie.source === 'ophim') {
+        ophimMap.set(key, movie);
+      } else if (movie.source === 'phimapi') {
+        phimapiMap.set(key, movie);
+      }
+    });
+
+    // 2. Override metadata of movies with higher priority source data if available
+    const processedMovies = movies.map(movie => {
+      const key = getSmartKey(movie);
+      const priorityMovie = ophimMap.get(key) || phimapiMap.get(key);
+      if (priorityMovie && movie.source !== priorityMovie.source) {
+        return {
+          ...movie,
+          name: priorityMovie.name,
+          origin_name: priorityMovie.origin_name,
+          poster_url: priorityMovie.poster_url,
+          thumb_url: priorityMovie.thumb_url,
+          year: priorityMovie.year,
+        };
+      }
+      return movie;
+    });
+
+    // 3. Filter or Deduplicate based on selectedSource
     if (selectedSource === "all") {
-      // Deduplicate movies prioritizing ophim > phimapi > nguonc
       const itemsMap = new Map<string, Movie>();
       
-      const getSmartKey = (item: Movie) => {
-        const originName = item.origin_name || item.name || '';
-        const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
-        return `${normalizedOriginName}-${item.year || 'unknown'}`;
-      };
-
       // Sort movies: 'ophim' first, then 'phimapi', then 'nguonc'
-      const sortedMovies = [...movies].sort((a: any, b: any) => {
+      const sortedMovies = [...processedMovies].sort((a: any, b: any) => {
         const priority = { ophim: 3, phimapi: 2, nguonc: 1 } as any;
         const priorityA = priority[a.source] || 0;
         const priorityB = priority[b.source] || 0;
@@ -79,8 +109,8 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
 
       return Array.from(itemsMap.values());
     } else {
-      // Show all movies from that source directly
-      return movies.filter((movie: any) => movie.source === selectedSource);
+      // Show all movies from that source directly, but with priority metadata overridden
+      return processedMovies.filter((movie: any) => movie.source === selectedSource);
     }
   }, [movies, selectedSource]);
 
