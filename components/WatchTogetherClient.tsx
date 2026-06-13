@@ -106,7 +106,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isJoined]);
+  }, [isJoined, ambientActive]);
+
 
 
   useEffect(() => {
@@ -293,11 +294,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       )}
 
 
-      {isTheaterMode && (
-        <style dangerouslySetInnerHTML={{__html: `
-          header { display: none !important; }
-        `}} />
-      )}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 767px) {
+          header, footer { display: none !important; }
+        }
+        ${isTheaterMode ? "header { display: none !important; }" : ""}
+      `}} />
+
       
       {/* Esc key & native fullscreen change listener */}
       <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} containerRef={containerRef} />
@@ -565,7 +568,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         {/* Reaction Bar */}
         {isJoined && (
           <div className="px-4 py-1.5 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
-            <div className="grid grid-cols-6 gap-2 w-full justify-items-center py-1">
+            <div className="grid grid-cols-5 gap-2 w-full justify-items-center py-1">
+
               {EMOJIS.map(emoji => (
                 <button
                   key={emoji}
