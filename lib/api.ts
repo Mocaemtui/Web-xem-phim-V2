@@ -381,12 +381,7 @@ export async function getChiTietPhim(
     fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url)
   ]);
 
-  let baseMovie: MovieDetail | null = null;
-  if (PRIMARY_SOURCE.id === 'phimapi') {
-    baseMovie = phimapiRes?.data?.item || ophimRes?.data?.item || null;
-  } else {
-    baseMovie = ophimRes?.data?.item || phimapiRes?.data?.item || null;
-  }
+  let baseMovie: MovieDetail | null = ophimRes?.data?.item || phimapiRes?.data?.item || null;
 
   // --- SMART CROSS-API MATCHING (FALLBACK) ---
   if (baseMovie) {
@@ -441,8 +436,8 @@ export async function getChiTietPhim(
   const allEpisodes: any[] = [];
 
   if (ophimRes?.data?.item) {
-    baseMovie = ophimRes.data.item;
-    allEpisodes.push(...(baseMovie.episodes?.map(e => ({ ...e, server_name: `Ophim - ${e.server_name}` })) || []));
+    if (!baseMovie) baseMovie = ophimRes.data.item;
+    allEpisodes.push(...(ophimRes.data.item.episodes?.map(e => ({ ...e, server_name: `Ophim - ${e.server_name}` })) || []));
   }
   
   if (phimapiRes?.data?.item) {
@@ -451,6 +446,21 @@ export async function getChiTietPhim(
   }
 
   if (!baseMovie) return null;
+
+  // Re-evaluate baseMovie based on PRIMARY_SOURCE after potential fallbacks
+  if (PRIMARY_SOURCE.id === 'phimapi') {
+    baseMovie = phimapiRes?.data?.item || ophimRes?.data?.item || baseMovie;
+    if (ophimRes?.data?.item && baseMovie !== ophimRes.data.item) {
+      baseMovie.alt_poster_url = ophimRes.data.item.poster_url;
+      baseMovie.alt_thumb_url = ophimRes.data.item.thumb_url;
+    }
+  } else {
+    baseMovie = ophimRes?.data?.item || phimapiRes?.data?.item || baseMovie;
+    if (phimapiRes?.data?.item && baseMovie !== phimapiRes.data.item) {
+      baseMovie.alt_poster_url = phimapiRes.data.item.poster_url;
+      baseMovie.alt_thumb_url = phimapiRes.data.item.thumb_url;
+    }
+  }
 
   baseMovie.episodes = allEpisodes;
 

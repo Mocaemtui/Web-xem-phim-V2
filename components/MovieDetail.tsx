@@ -16,11 +16,16 @@ interface MovieDetailProps {
 }
 
 export default function MovieDetail({ movie, images, peoples }: MovieDetailProps) {
-  const [useTmdbBackdrop, setUseTmdbBackdrop] = useState(false);
-  const [useTmdbPoster, setUseTmdbPoster] = useState(false);
+  // 0 = Primary, 1 = TMDB, 2 = Alternate
+  const [backdropSource, setBackdropSource] = useState<0 | 1 | 2>(0);
+  const [posterSource, setPosterSource] = useState<0 | 1 | 2>(0);
 
-  const ophimPosterUrl = getBackdropUrl(movie);
-  const ophimThumbUrl = getPosterUrl(movie);
+  const primaryPosterUrl = getBackdropUrl(movie);
+  const primaryThumbUrl = getPosterUrl(movie);
+  
+  // Alternate URLs (from fallback/secondary API)
+  const altPosterUrl = movie.alt_poster_url ? resolveImgUrl(movie.alt_poster_url) : null;
+  const altThumbUrl = movie.alt_thumb_url ? resolveImgUrl(movie.alt_thumb_url) : null;
 
   // TMDB URLs
   const tmdbPosterFile = images?.images?.find(img => img.type === 'poster')?.file_path;
@@ -31,26 +36,38 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const tmdbBackdropBase = images?.image_sizes?.backdrop?.w1280 || "https://image.tmdb.org/t/p/w1280";
   const tmdbBackdropUrl = tmdbBackdropFile ? `${tmdbBackdropBase}${tmdbBackdropFile}` : null;
 
+  // Determine available options
+  const hasAltBackdrop = Boolean(altPosterUrl && altPosterUrl !== primaryPosterUrl);
+  const hasAltPoster = Boolean(altThumbUrl && altThumbUrl !== primaryThumbUrl);
+
+  const availableBackdrops = [primaryPosterUrl];
+  if (tmdbBackdropUrl) availableBackdrops.push(tmdbBackdropUrl);
+  if (hasAltBackdrop) availableBackdrops.push(altPosterUrl!);
+
+  const availablePosters = [primaryThumbUrl];
+  if (tmdbPosterUrl) availablePosters.push(tmdbPosterUrl);
+  if (hasAltPoster) availablePosters.push(altThumbUrl!);
+
   // Single-image transition states
-  const [backdropUrl, setBackdropUrl] = useState(ophimPosterUrl);
-  const [posterUrl, setPosterUrl] = useState(ophimThumbUrl);
+  const [backdropUrl, setBackdropUrl] = useState(primaryPosterUrl);
+  const [posterUrl, setPosterUrl] = useState(primaryThumbUrl);
   const [backdropFade, setBackdropFade] = useState(true);
   const [posterFade, setPosterFade] = useState(true);
 
   // Sync states when source preferences change
   useEffect(() => {
-    setBackdropUrl(useTmdbBackdrop && tmdbBackdropUrl ? tmdbBackdropUrl : ophimPosterUrl);
-  }, [useTmdbBackdrop, ophimPosterUrl, tmdbBackdropUrl]);
+    setBackdropUrl(availableBackdrops[backdropSource % availableBackdrops.length]);
+  }, [backdropSource, primaryPosterUrl, tmdbBackdropUrl, altPosterUrl]);
 
   useEffect(() => {
-    setPosterUrl(useTmdbPoster && tmdbPosterUrl ? tmdbPosterUrl : ophimThumbUrl);
-  }, [useTmdbPoster, ophimThumbUrl, tmdbPosterUrl]);
+    setPosterUrl(availablePosters[posterSource % availablePosters.length]);
+  }, [posterSource, primaryThumbUrl, tmdbPosterUrl, altThumbUrl]);
 
   // Handle transitions smoothly
   const toggleBackdrop = () => {
     setBackdropFade(false);
     setTimeout(() => {
-      setUseTmdbBackdrop(prev => !prev);
+      setBackdropSource(prev => ((prev + 1) % availableBackdrops.length) as 0 | 1 | 2);
       setBackdropFade(true);
     }, 250);
   };
@@ -58,7 +75,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
   const togglePoster = () => {
     setPosterFade(false);
     setTimeout(() => {
-      setUseTmdbPoster(prev => !prev);
+      setPosterSource(prev => ((prev + 1) % availablePosters.length) as 0 | 1 | 2);
       setPosterFade(true);
     }, 250);
   };
@@ -94,13 +111,13 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           src={backdropUrl}
           alt={movie.name}
           className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out cursor-pointer md:cursor-default ${backdropFade ? "opacity-100" : "opacity-0"}`}
-          onClick={() => { if (window.innerWidth < 768 && tmdbBackdropUrl) toggleBackdrop(); }}
+          onClick={() => { if (window.innerWidth < 768 && availableBackdrops.length > 1) toggleBackdrop(); }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent pointer-events-none" />
-        {tmdbBackdropUrl && (
+        {availableBackdrops.length > 1 && (
           <div className="hidden md:flex absolute top-0 right-0 w-48 h-48 z-30 group/corner items-start justify-end p-4">
             <div className="opacity-0 invisible group-hover/corner:opacity-100 group-hover/corner:visible pointer-events-none group-hover/corner:pointer-events-auto transition-all duration-300">
-              <ImageToggle onToggle={toggleBackdrop} label="Đổi ảnh nền (Ophim / TMDB)" />
+              <ImageToggle onToggle={toggleBackdrop} label={`Đổi ảnh nền (1/${availableBackdrops.length})`} />
             </div>
           </div>
         )}
@@ -117,9 +134,9 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
                 alt={movie.name}
                 className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${posterFade ? "opacity-100" : "opacity-0"}`}
               />
-              {tmdbPosterUrl && (
+              {availablePosters.length > 1 && (
                 <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 invisible group-hover:visible pointer-events-none group-hover:pointer-events-auto transition-all duration-300">
-                  <ImageToggle onToggle={togglePoster} label="Đổi ảnh poster (Ophim / TMDB)" />
+                  <ImageToggle onToggle={togglePoster} label={`Đổi ảnh poster (1/${availablePosters.length})`} />
                 </div>
               )}
             </div>
@@ -129,7 +146,7 @@ export default function MovieDetail({ movie, images, peoples }: MovieDetailProps
           <div className="flex flex-col gap-6">
             {/* Mobile Poster */}
             <div className="md:hidden">
-              <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900 cursor-pointer" onClick={() => { if (tmdbPosterUrl) togglePoster(); }}>
+              <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-2xl max-w-[200px] group bg-zinc-900 cursor-pointer" onClick={() => { if (availablePosters.length > 1) togglePoster(); }}>
                 <img
                   src={posterUrl}
                   alt={movie.name}

@@ -72,6 +72,8 @@ export interface MovieListResponse {
 }
 
 export interface MovieDetail extends Movie {
+  alt_poster_url?: string;
+  alt_thumb_url?: string;
   episodes: {
     server_name: string;
     server_data: {
