@@ -529,7 +529,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className="hidden md:flex bg-transparent flex-col h-screen shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
+        className="hidden md:flex bg-transparent flex-col h-full shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
         style={{ width: `${chatWidth}px` }}
       >
 
@@ -582,7 +582,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only) */}
       {!isTheaterMode && (
-        <div className="hidden md:block w-full shrink-0 px-6 py-4 bg-zinc-950/25 border-t border-zinc-900/40 relative z-20 max-h-[30vh] overflow-y-auto">
+        <div className="hidden md:block w-full shrink-0 px-6 py-5 bg-zinc-950/60 border-t border-zinc-900/50 backdrop-blur-md relative z-20 max-h-[30vh] overflow-y-auto shadow-2xl">
           {episodes.length > 0 && serverData.length > 0 && (
             <EpisodeSelector
               episodes={episodes}
