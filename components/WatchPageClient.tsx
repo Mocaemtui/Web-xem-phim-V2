@@ -322,8 +322,6 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
             </div>
           )}
         </div>
-
-        </div>
       </div>
     </div>
   );
