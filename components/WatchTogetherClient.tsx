@@ -344,7 +344,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         <div className={`w-full transition-all ${
           isTheaterMode 
             ? "h-full max-h-screen flex items-center justify-end p-0 z-40" 
-            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6"
+            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6 max-h-[55vh] aspect-video mx-auto"
         }`}>
 
           {currentEpisode ? (
@@ -420,7 +420,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Desktop-only Episode Selector */}
         {!isTheaterMode && (
-          <div className="hidden md:block w-full mt-auto max-h-[35vh] overflow-y-auto pr-1 shrink-0">
+          <div className="hidden md:block w-full mt-auto max-h-[30vh] overflow-y-auto pr-1 shrink-0 border-t border-zinc-800/10 pt-4">
             {episodes.length > 0 && serverData.length > 0 && (
               <EpisodeSelector
                 episodes={episodes}
@@ -465,12 +465,12 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             </div>
 
             {/* Mobile Tab Content Container */}
-            <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border-0 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
               {activeMobileTab === "chat" && (
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Emojis Reaction bar inside mobile chat tab */}
                   {isJoined && (
-                    <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-950/20 rounded-lg border border-zinc-900/10 mb-2 shrink-0 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-950/20 rounded-lg border-0 mb-2 shrink-0 overflow-x-auto no-scrollbar">
 
                       {EMOJIS.map(emoji => (
                         <button
@@ -605,13 +605,13 @@ function KeyboardAndTheaterHandler({
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   useEffect(() => {
-    // Esc key to exit theater mode
+    // Esc key to exit theater mode (using capture to bypass focus/propagation issues)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsTheaterMode(false);
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
 
     // Listen to native fullscreen changes (e.g. exiting fullscreen via Esc/browser controls)
     const handleFullscreenChange = () => {
@@ -643,7 +643,7 @@ function KeyboardAndTheaterHandler({
     }
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (typeof window !== "undefined" && window.visualViewport) {
         window.visualViewport.removeEventListener("resize", handleResize);
