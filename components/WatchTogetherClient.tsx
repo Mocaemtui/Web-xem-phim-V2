@@ -300,7 +300,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       )}
       
       {/* Esc key & native fullscreen change listener */}
-      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} />
+      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} containerRef={containerRef} />
+
 
       {/* Left Area: Video Player & Controls */}
       <div 
@@ -594,7 +595,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   );
 }
 
-function KeyboardAndTheaterHandler({ setIsTheaterMode }: { setIsTheaterMode: (val: boolean) => void }) {
+function KeyboardAndTheaterHandler({ 
+  setIsTheaterMode, 
+  containerRef 
+}: { 
+  setIsTheaterMode: (val: boolean) => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
   useEffect(() => {
     // Esc key to exit theater mode
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -610,13 +617,41 @@ function KeyboardAndTheaterHandler({ setIsTheaterMode }: { setIsTheaterMode: (va
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
+    // Visual Viewport resize handler to lock layout height on mobile keyboard popups
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      
+      const root = containerRef.current;
+      if (root && window.innerWidth < 768) {
+        root.style.height = `${viewport.height}px`;
+        root.style.transform = `translateY(${viewport.offsetTop}px)`;
+      } else if (root) {
+        // Reset styles for desktop
+        root.style.height = "";
+        root.style.transform = "";
+      }
+    };
+
+    if (typeof window !== "undefined" && window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleResize);
+      window.visualViewport.addEventListener("scroll", handleResize);
+      // Run immediately
+      handleResize();
+    }
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      if (typeof window !== "undefined" && window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleResize);
+        window.visualViewport.removeEventListener("scroll", handleResize);
+      }
     };
-  }, [setIsTheaterMode]);
+  }, [setIsTheaterMode, containerRef]);
 
   return null;
 }
+
 
 

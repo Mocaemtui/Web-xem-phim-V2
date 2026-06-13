@@ -38,8 +38,14 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
       setText('');
       onTyping(false);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      
+      // Dismiss virtual keyboard on submit
+      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     }
   };
+
 
   return (
     <div className="flex flex-col h-full bg-zinc-950/10 backdrop-blur-md rounded-lg overflow-hidden border border-zinc-900/10 shadow-none">
