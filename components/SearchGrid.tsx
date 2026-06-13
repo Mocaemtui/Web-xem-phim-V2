@@ -12,7 +12,25 @@ interface SearchGridProps {
 export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
   const [isLoadingNguonC, setIsLoadingNguonC] = useState(true);
-  const [selectedSource, setSelectedSource] = useState<string>("ophim");
+  const [selectedSource, setSelectedSource] = useState<string>("all");
+  const [lastKeyword, setLastKeyword] = useState("");
+
+  // Smart default tab selection on keyword change or when movies are loaded
+  useEffect(() => {
+    if (keyword !== lastKeyword && movies.length > 0) {
+      const availableSources = new Set(movies.map((m: any) => m.source));
+      if (availableSources.has("ophim")) {
+        setSelectedSource("ophim");
+      } else if (availableSources.has("phimapi")) {
+        setSelectedSource("phimapi");
+      } else if (availableSources.has("nguonc")) {
+        setSelectedSource("nguonc");
+      } else {
+        setSelectedSource("all");
+      }
+      setLastKeyword(keyword);
+    }
+  }, [keyword, movies, lastKeyword]);
 
   useEffect(() => {
     const fetchNguonC = async () => {
