@@ -718,24 +718,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           >
             {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </button>
-
-          {/* Full Width / Collapse Sidebar Option when chat is hidden */}
-          {isChatHidden && (
-            <button
-              onClick={() => {
-                setIsSidebarCollapsed(true);
-                setShowWatchers(false);
-                setShowEmojis(false);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
-              title="Xem toàn màn hình (Ẩn thanh điều khiển)"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
-              </svg>
-            </button>
-          )}
-
         </div>
 
 
