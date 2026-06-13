@@ -1018,9 +1018,6 @@ function KeyboardAndTheaterHandler({
 
       if (e.key === "Escape") {
         setIsTheaterMode(false);
-      } else if (e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        setIsTheaterMode(prev => !prev);
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (isTheaterMode) {
@@ -1038,11 +1035,15 @@ function KeyboardAndTheaterHandler({
             return nextState;
           });
         } else {
-          // If not in theater mode, pressing Enter just focuses the input field
-          const inputEl = document.getElementById("chat-input-field");
-          if (inputEl) {
-            inputEl.focus();
-          }
+          // Khi chưa zoom nhấn enter sẽ chuyển sang zoom chưa ẩn chat và focus vào input
+          setIsTheaterMode(true);
+          setIsChatHidden(false);
+          setTimeout(() => {
+            const inputEl = document.getElementById("chat-input-field");
+            if (inputEl) {
+              inputEl.focus();
+            }
+          }, 100);
         }
       }
     };

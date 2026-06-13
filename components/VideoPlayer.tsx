@@ -678,6 +678,7 @@ export default function VideoPlayer({
         }`}
         style={{ zIndex: 2 }}
         onMouseMove={resetControlsTimer}
+        onTouchEnd={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
             setShowControls(false);
@@ -734,9 +735,15 @@ export default function VideoPlayer({
                 }
               }}
               onClick={(e) => {
-                // On desktop, regular click triggers play/pause. On mobile, handled smoothly.
                 const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-                if (!isMobile) {
+                if (isMobile) {
+                  if (!showControls) {
+                    setShowControls(true);
+                    resetControlsTimer();
+                  } else {
+                    togglePlay();
+                  }
+                } else {
                   togglePlay();
                 }
               }}
