@@ -43,6 +43,29 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [unreadCount, setUnreadCount] = useState(0);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
 
+  // Auto-hide Top Controls in Theater Mode on inactivity
+  const [showTopControls, setShowTopControls] = useState(true);
+  const topControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetTopControlsTimer = () => {
+    setShowTopControls(true);
+    if (topControlsTimeoutRef.current) clearTimeout(topControlsTimeoutRef.current);
+    topControlsTimeoutRef.current = setTimeout(() => {
+      setShowTopControls(false);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = () => {
+      resetTopControlsTimer();
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (topControlsTimeoutRef.current) clearTimeout(topControlsTimeoutRef.current);
+    };
+  }, []);
+
   // Sound Notification settings
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
     if (typeof window !== "undefined") {
@@ -530,7 +553,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
           {/* Floating Horizontal Controller at Top-Right (Only shows when chat is hidden) */}
           {isChatHidden && (
-            <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/90 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md transition-opacity duration-300 shadow-xl opacity-100 animate-in fade-in"
+            <div className={`absolute top-4 right-4 z-50 flex items-center gap-2 bg-zinc-950/90 border border-zinc-800/60 p-2 rounded-xl backdrop-blur-md transition-opacity duration-300 shadow-xl ${showTopControls ? "opacity-100" : "opacity-0 pointer-events-none"} animate-in fade-in`}
                  style={{ contentVisibility: "auto" }}>
               
               {/* Watchers Popover (Horizontal Context) */}
@@ -630,7 +653,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             <>
               <FloatingReactions reactions={reactions} />
               <VideoPlayer
-                key={`${currentServerIndex}-${currentEpisodeIndex}`}
                 externalVideoRef={videoRef}
                 poster={posterUrl}
                 videoUrl={currentEpisode.link_m3u8}
