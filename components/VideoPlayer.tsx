@@ -280,7 +280,9 @@ export default function VideoPlayer({
       
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (isMountedRef.current) {
-          video.play().catch(() => {});
+          if (!isWatchTogether) {
+            video.play().catch(() => {});
+          }
         }
       });
       
@@ -303,7 +305,9 @@ export default function VideoPlayer({
       video.src = videoUrl;
       playVideo = () => {
         if (isMountedRef.current) {
-          video.play().catch(() => {});
+          if (!isWatchTogether) {
+            video.play().catch(() => {});
+          }
         }
       };
       video.addEventListener("loadedmetadata", playVideo);

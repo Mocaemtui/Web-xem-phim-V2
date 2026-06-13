@@ -234,14 +234,22 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       if (pendingSyncTimeRef.current !== null) {
         isReceivingEvent.current = true;
         video.currentTime = pendingSyncTimeRef.current;
-        if (pendingSyncPlayingRef.current) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
+        
+        const targetPlaying = pendingSyncPlayingRef.current;
         pendingSyncTimeRef.current = null;
         pendingSyncPlayingRef.current = null;
-        setTimeout(() => { isReceivingEvent.current = false; }, 500);
+
+        setTimeout(() => {
+          if (targetPlaying) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+          
+          setTimeout(() => {
+            isReceivingEvent.current = false;
+          }, 1500);
+        }, 300);
       }
     };
 
@@ -406,6 +414,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       if (isEpisodeDifferent) {
         // Store the target time/state to apply once the new episode manifest is loaded
+        isReceivingEvent.current = true;
         pendingSyncTimeRef.current = data.time;
         pendingSyncPlayingRef.current = data.isPlaying;
       } else {
