@@ -324,7 +324,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
             isTheaterMode 
               ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
-              : "h-full overflow-hidden p-3 md:p-6 bg-transparent"
+              : "min-h-0 overflow-hidden p-3 md:p-6 bg-transparent"
           }`}
           onDoubleClick={() => setIsTheaterMode(prev => !prev)}
         >
@@ -529,7 +529,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className="hidden md:flex bg-transparent flex-col h-full shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
+        className="hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
         style={{ width: `${chatWidth}px` }}
       >
 
