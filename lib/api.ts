@@ -74,6 +74,31 @@ export async function getPhimMoi(
   page: number = 1,
   limit: number = 20
 ): Promise<ApiResponse<MovieListResponse> | null> {
+  if (PRIMARY_SOURCE.id === 'phimapi') {
+    try {
+      const res = await fetch(`https://phimapi.com/danh-sach/phim-moi-cap-nhat-v3?page=${page}&limit=${limit}`, {
+        next: { revalidate: 3600 }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === true) {
+          return {
+            status: "success",
+            data: {
+              items: data.items,
+              params: {
+                pagination: data.pagination
+              }
+            }
+          } as any;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Fallback to standard V1 endpoint
   return fetchAPI<MovieListResponse>(
     `/v1/api/danh-sach/phim-moi-cap-nhat?page=${page}&limit=${limit}`
   );
