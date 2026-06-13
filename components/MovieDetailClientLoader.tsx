@@ -48,7 +48,7 @@ export default function MovieDetailClientLoader({ slug, type }: Props) {
           episode_total: m.total_episodes?.toString(),
           content: m.description,
           episodes: m.episodes?.map((epServer: any) => ({
-            server_name: `MOCA MAX - ${epServer.server_name || "NguonC"}`,
+            server_name: `NguonC - ${epServer.server_name || "Server 1"}`,
             server_data: epServer.items?.map((ep: any) => ({
               name: ep.name,
               slug: ep.slug,
@@ -79,7 +79,7 @@ export default function MovieDetailClientLoader({ slug, type }: Props) {
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p className="text-zinc-400">Đang quét tìm dữ liệu dự phòng từ MOCA MAX...</p>
+        <p className="text-zinc-400">Đang quét tìm dữ liệu dự phòng từ NguonC...</p>
       </div>
     );
   }

@@ -87,7 +87,7 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
         
         if (data?.movie?.episodes) {
           const nguonCEps = data.movie.episodes.map((epServer: any) => ({
-            server_name: `MOCA MAX - ${epServer.server_name || "NguonC"}`,
+            server_name: `NguonC - ${epServer.server_name || "Server 1"}`,
             server_data: epServer.items?.map((ep: any) => ({
               name: ep.name,
               slug: ep.slug,
@@ -115,8 +115,8 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
       }
     };
     
-    // Chỉ fetch nếu chưa có MOCA MAX
-    if (!movie.episodes?.some(e => e.server_name.includes("MOCA MAX"))) {
+    // Chỉ fetch nếu chưa có NguonC
+    if (!movie.episodes?.some(e => e.server_name.includes("NguonC"))) {
       fetchNguonC();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,9 +126,9 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
   const getAvailableServers = () => {
     const servers = new Set<string>();
     movie.episodes?.forEach(ep => {
-      if (ep.server_name.includes("MOCA PRO")) servers.add("MOCA PRO");
-      else if (ep.server_name.includes("MOCA VIP")) servers.add("MOCA VIP");
-      else if (ep.server_name.includes("MOCA MAX")) servers.add("MOCA MAX");
+      if (ep.server_name.includes("Ophim")) servers.add("Ophim");
+      else if (ep.server_name.includes("PhimAPI")) servers.add("PhimAPI");
+      else if (ep.server_name.includes("NguonC")) servers.add("NguonC");
       else servers.add(ep.server_name);
     });
     return Array.from(servers);
@@ -310,9 +310,9 @@ export default function MovieDetail({ movie: initialMovie, images, peoples }: Mo
                 <div className="flex flex-wrap gap-2">
                   {availableServers.map((server, index) => {
                     let colorClass = "bg-zinc-800 text-zinc-300 border-zinc-700";
-                    if (server.includes("MOCA PRO")) colorClass = "bg-blue-900/40 text-blue-300 border-blue-800";
-                    if (server.includes("MOCA VIP")) colorClass = "bg-purple-900/40 text-purple-300 border-purple-800";
-                    if (server.includes("MOCA MAX")) colorClass = "bg-emerald-900/40 text-emerald-300 border-emerald-800";
+                    if (server.includes("Ophim")) colorClass = "bg-blue-900/40 text-blue-300 border-blue-800";
+                    if (server.includes("PhimAPI")) colorClass = "bg-purple-900/40 text-purple-300 border-purple-800";
+                    if (server.includes("NguonC")) colorClass = "bg-emerald-900/40 text-emerald-300 border-emerald-800";
                     
                     return (
                       <span
