@@ -25,6 +25,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [currentServerIndex, setCurrentServerIndex] = useState(0);
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
   const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "episodes" | "watchers">("chat");
+  const [isTheaterMode, setIsTheaterMode] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const isReceivingEvent = useRef<boolean>(false);
@@ -191,28 +192,25 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   return (
     <div className="h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+      {isTheaterMode && (
+        <style dangerouslySetInnerHTML={{__html: `
+          header { display: none !important; }
+        `}} />
+      )}
+      
       {/* Left Area: Video Player & Controls */}
-      <div className="flex-1 flex flex-col h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6">
-        {/* Title and Share Link */}
-        <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
-          <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
-            {movie.name} - Tập {currentEpisodeIndex + 1}
-          </h1>
-          <button
-            onClick={copyLink}
-            className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-855 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? "Đã copy" : "Mời bạn"}</span>
-          </button>
-        </div>
+      <div className={`flex-1 flex flex-col h-full md:h-screen overflow-hidden md:overflow-y-auto transition-all duration-300 ${isTheaterMode ? "p-0 bg-black" : "p-3 md:p-6"}`}>
+        
+        {/* Mobile Spacer (holds height for fixed top video player on mobile) */}
+        <div className="h-[calc(56.25vw+16px)] md:hidden shrink-0" />
 
-        {/* Video Player (Sticky top-0 on mobile, relative on desktop) */}
-        <div className="sticky top-0 md:relative shrink-0 mb-3 md:mb-6 z-20 bg-zinc-950 py-1 md:py-0">
+        {/* Video Player (Fixed top-0 on mobile, relative on desktop) */}
+        <div className="fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6">
           {currentEpisode ? (
             <>
               <FloatingReactions reactions={reactions} />
               <VideoPlayer
+                key={`${currentServerIndex}-${currentEpisodeIndex}`}
                 externalVideoRef={videoRef}
                 poster={posterUrl}
                 videoUrl={currentEpisode.link_m3u8}
@@ -241,6 +239,39 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
               <p className="text-zinc-400">Không tìm thấy link phim</p>
             </div>
           )}
+        </div>
+
+        {/* Title and Share Link with Zoom Button */}
+        <div className={`flex items-center justify-between gap-2 mb-2.5 shrink-0 ${isTheaterMode ? "p-4" : ""}`}>
+          <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
+            {movie.name} - Tập {currentEpisodeIndex + 1}
+          </h1>
+          <div className="flex items-center gap-2">
+            {/* Zoom / Theater Toggle Button on Desktop */}
+            <button
+              onClick={() => setIsTheaterMode(!isTheaterMode)}
+              className="hidden md:flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 cursor-pointer active:scale-95"
+              title="Bật/Tắt chế độ rạp chiếu (Theater Mode)"
+            >
+              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                {isTheaterMode ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 12v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                )}
+              </svg>
+              <span>{isTheaterMode ? "Thu nhỏ" : "Phóng to"}</span>
+            </button>
+
+            {/* Copy invite link */}
+            <button
+              onClick={copyLink}
+              className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-855 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0 cursor-pointer active:scale-95"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? "Đã copy" : "Mời bạn"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Desktop-only Episode Selector */}
