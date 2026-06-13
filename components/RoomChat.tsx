@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '@/hooks/useWatchTogether';
+import { Send } from 'lucide-react';
 
 interface RoomChatProps {
   messages: ChatMessage[];
@@ -39,7 +40,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !text.trim()) {
+    if (e.key === "Enter" && !text.trim() && isTheaterMode) {
       e.preventDefault();
       window.dispatchEvent(new Event("toggle-chat-visibility"));
     }
@@ -106,22 +107,24 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         )}
       </div>
 
-      <div className={`p-3 bg-zinc-950/20 backdrop-blur-sm border-t border-zinc-900/30 pointer-events-auto ${isTheaterMode ? "mb-24" : ""}`}>
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className={`p-3 bg-zinc-950/40 border-t border-zinc-800/40 pointer-events-auto backdrop-blur-md ${isTheaterMode ? "mb-24" : ""}`}>
+        <form onSubmit={handleSubmit} className="flex gap-2 items-center">
           <input
             id="chat-input-field"
             type="text"
             value={text}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-zinc-900/30 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
+            className="flex-1 bg-zinc-900/50 hover:bg-zinc-900/70 border border-zinc-800 focus:border-blue-500/50 text-zinc-200 text-sm rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
           />
           <button
             type="submit"
             disabled={!text.trim()}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-white p-2.5 rounded-xl transition-all duration-200 active:scale-95 shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/10"
+            title="Gửi tin nhắn"
           >
-            Gửi
+            <Send className="w-4 h-4" />
           </button>
         </form>
       </div>

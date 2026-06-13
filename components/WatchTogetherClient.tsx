@@ -89,6 +89,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   useEffect(() => {
     const handleToggleChat = () => {
+      if (!isTheaterMode) return;
       setIsChatHidden(prev => {
         const nextState = !prev;
         if (!nextState) {
@@ -102,7 +103,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     };
     window.addEventListener("toggle-chat-visibility", handleToggleChat);
     return () => window.removeEventListener("toggle-chat-visibility", handleToggleChat);
-  }, []);
+  }, [isTheaterMode]);
+
+  useEffect(() => {
+    if (!isTheaterMode) {
+      setIsChatHidden(false);
+    }
+  }, [isTheaterMode]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -493,7 +500,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       
       {/* Esc key & native fullscreen change listener */}
-      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} setIsChatHidden={setIsChatHidden} containerRef={containerRef} />
+      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} setIsChatHidden={setIsChatHidden} containerRef={containerRef} isTheaterMode={isTheaterMode} />
 
 
       {/* Main workspace: Side-by-side Player and Chat Sidebar (Fills the screen first fold) */}
@@ -864,17 +871,19 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </button>
 
            {/* Hide/Show Chat Toggle Button */}
-          <button
-            onClick={() => {
-              setIsChatHidden(prev => !prev);
-              setShowWatchers(false);
-              setShowEmojis(false);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isChatHidden ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
-            title={isChatHidden ? "Hiện cuộc trò chuyện" : "Tạm ẩn cuộc trò chuyện"}
-          >
-            {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
+          {isTheaterMode && (
+            <button
+              onClick={() => {
+                setIsChatHidden(prev => !prev);
+                setShowWatchers(false);
+                setShowEmojis(false);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${isChatHidden ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+              title={isChatHidden ? "Hiện cuộc trò chuyện" : "Tạm ẩn cuộc trò chuyện"}
+            >
+              {isChatHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          )}
         </div>
 
 
@@ -893,7 +902,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       </div>
 
       {/* Floating Chat Restore Button */}
-      {isChatHidden && (
+      {isChatHidden && isTheaterMode && (
         <button
           onClick={() => {
             setIsChatHidden(false);
@@ -951,11 +960,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 function KeyboardAndTheaterHandler({ 
   setIsTheaterMode, 
   setIsChatHidden,
-  containerRef 
+  containerRef,
+  isTheaterMode
 }: { 
   setIsTheaterMode: React.Dispatch<React.SetStateAction<boolean>>;
   setIsChatHidden: React.Dispatch<React.SetStateAction<boolean>>;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  isTheaterMode: boolean;
 }) {
   useEffect(() => {
     // Esc key & 'z' key to toggle theater mode (using capture to bypass focus/propagation issues)
@@ -978,19 +989,27 @@ function KeyboardAndTheaterHandler({
         setIsTheaterMode(prev => !prev);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        setIsChatHidden(prev => {
-          const nextState = !prev;
-          if (!nextState) {
-            // Tự động focus ngay khi mở chat
-            setTimeout(() => {
-              const inputEl = document.getElementById("chat-input-field");
-              if (inputEl) {
-                inputEl.focus();
-              }
-            }, 100);
+        if (isTheaterMode) {
+          setIsChatHidden(prev => {
+            const nextState = !prev;
+            if (!nextState) {
+              // Tự động focus ngay khi mở chat
+              setTimeout(() => {
+                const inputEl = document.getElementById("chat-input-field");
+                if (inputEl) {
+                  inputEl.focus();
+                }
+              }, 100);
+            }
+            return nextState;
+          });
+        } else {
+          // If not in theater mode, pressing Enter just focuses the input field
+          const inputEl = document.getElementById("chat-input-field");
+          if (inputEl) {
+            inputEl.focus();
           }
-          return nextState;
-        });
+        }
       }
     };
     document.addEventListener("keydown", handleKeyDown, { capture: true });
