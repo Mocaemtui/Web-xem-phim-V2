@@ -24,13 +24,21 @@ export async function fetchAPI<T>(
     const hasQuery = endpoint.includes('?');
     const url = `${baseUrl}${endpoint}${hasQuery ? '&' : '?'}cb=1`;
     
-    const response = await fetch(url, {
-      next: { revalidate }, // Cache API theo thời gian cấu hình
+    const options = {
+      next: { revalidate },
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json',
       }
-    });
+    };
+
+    let response = await fetch(url, options);
+
+    // Fallback to Ophim if PhimAPI returns 404 or fails
+    if (!response.ok && baseUrl === MOVIE_SOURCES.PHIMAPI.url) {
+      const fallbackUrl = `${MOVIE_SOURCES.OPHIM.url}${endpoint}${hasQuery ? '&' : '?'}cb=1`;
+      response = await fetch(fallbackUrl, options);
+    }
 
     if (!response.ok) {
       return null;
@@ -39,7 +47,15 @@ export async function fetchAPI<T>(
     const data = await response.json();
     
     // Check if API returns error status
-    if (data.status === 'error') {
+    if (data.status === 'error' && baseUrl === MOVIE_SOURCES.PHIMAPI.url) {
+      const fallbackUrl = `${MOVIE_SOURCES.OPHIM.url}${endpoint}${hasQuery ? '&' : '?'}cb=1`;
+      const fallbackResponse = await fetch(fallbackUrl, options);
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        if (fallbackData.status !== 'error') return fallbackData;
+      }
+      return null;
+    } else if (data.status === 'error') {
       return null;
     }
     
