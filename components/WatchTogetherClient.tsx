@@ -323,7 +323,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         <div 
           className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
             isTheaterMode 
-              ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
+              ? "h-full w-full p-0 bg-transparent overflow-hidden justify-center items-center" 
               : "min-h-0 overflow-hidden p-3 md:p-6 bg-transparent"
           }`}
           onDoubleClick={() => setIsTheaterMode(prev => !prev)}

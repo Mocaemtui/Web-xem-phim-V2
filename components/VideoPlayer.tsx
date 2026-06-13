@@ -60,13 +60,6 @@ export default function VideoPlayer({
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
-  // Aspect Ratio & Zoom Mode (Normal, Cover)
-  const [zoomMode, setZoomMode] = useState<"normal" | "cover">("normal");
-
-  const toggleZoomMode = () => {
-    setZoomMode((prev) => (prev === "normal" ? "cover" : "normal"));
-  };
-  
   // Progress Save & Resume Watch
   const [savedTime, setSavedTime] = useState<number | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -574,7 +567,7 @@ export default function VideoPlayer({
             onClick={togglePlay}
             className="max-w-full max-h-full aspect-video relative z-10 cursor-pointer"
             style={{
-              objectFit: zoomMode === "cover" ? "cover" : "contain",
+              objectFit: "contain",
               transform: "scale(1)",
               transition: "object-fit 0.3s ease"
             }}
@@ -709,21 +702,6 @@ export default function VideoPlayer({
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Aspect Ratio / Zoom Toggle (Watch Together Only) */}
-                {isWatchTogether && (
-                  <button
-                    onClick={toggleZoomMode}
-                    className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${zoomMode !== "normal" ? "text-blue-400" : "text-zinc-500"}`}
-                    title={
-                      zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" : "Tỉ lệ: Phóng to đầy khung"
-                    }
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
-                    </svg>
-                  </button>
-                )}
-
                 {/* Ambient Light Toggle */}
                 <button
                   onClick={handleAmbientToggle}
