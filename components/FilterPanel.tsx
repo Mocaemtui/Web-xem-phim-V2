@@ -67,10 +67,21 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
     type: keyof typeof selectedFilters,
     value: string
   ) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [type]: prev[type] === value ? undefined : value,
-    }));
+    const newVal = selectedFilters[type] === value ? undefined : value;
+    const newFilters = {
+      ...selectedFilters,
+      [type]: newVal,
+    };
+    setSelectedFilters(newFilters);
+    
+    onFilterChange({
+      theLoai: newFilters.theLoaiSlug,
+      quocGia: newFilters.quocGiaSlug,
+      year: newFilters.year,
+      loaiPhim: newFilters.loaiPhim,
+      phienBan: newFilters.phienBan,
+      sortField: newFilters.sortField,
+    });
   };
 
   const clearAllFilters = () => {
