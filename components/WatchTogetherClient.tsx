@@ -31,6 +31,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [showWatchers, setShowWatchers] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [isChatHidden, setIsChatHidden] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
 
   useEffect(() => {
@@ -163,10 +164,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   }, []);
 
   useEffect(() => {
+    if (!isChatHidden) {
+      setUnreadCount(0);
+      setNewMessageNotification(null);
+    }
+  }, [isChatHidden]);
+
+  useEffect(() => {
     if (messages.length > lastMessageCountRef.current) {
       const lastMsg = messages[messages.length - 1];
       if (!lastMsg.isSystem && isChatHidden) {
-        setNewMessageNotification(`Tin nhắn mới từ ${lastMsg.sender}: "${lastMsg.text}"`);
+        setUnreadCount(prev => prev + 1);
+        setNewMessageNotification(`Có tin nhắn mới`);
       }
       lastMessageCountRef.current = messages.length;
     }
@@ -764,7 +773,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           className="fixed bottom-24 right-6 bg-blue-600/90 hover:bg-blue-700/90 backdrop-blur-md text-white border border-blue-500/30 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-xs flex items-center gap-2 animate-bounce cursor-pointer"
         >
           <MessageSquare className="w-3.5 h-3.5" />
-          <span>{newMessageNotification} (Nhấn để xem)</span>
+          <span>{newMessageNotification} ({unreadCount}) (Nhấn để xem)</span>
         </button>
       )}
     </div>

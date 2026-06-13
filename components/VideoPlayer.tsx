@@ -369,10 +369,16 @@ export default function VideoPlayer({
   const toggleFullscreen = () => {
     const video = videoRef.current;
     if (!video) return;
+    
+    // Request fullscreen on parent element to keep Ambient Light Canvas visible
+    const container = video.closest(".relative.w-full.h-full.max-h-full.flex.items-center.justify-center.z-10") || video.parentElement;
+    if (!container) return;
 
     if (!isFullscreen) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {});
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {});
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
       } else if ((video as any).webkitEnterFullscreen) {
         (video as any).webkitEnterFullscreen();
       }
