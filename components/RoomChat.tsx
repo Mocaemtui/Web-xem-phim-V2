@@ -44,11 +44,6 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
       setText('');
       onTyping(false);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      
-      // Dismiss virtual keyboard on submit
-      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
     }
   };
 
@@ -115,7 +110,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
           <button
             type="submit"
             disabled={!text.trim()}
-            className="md:hidden bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0"
           >
             Gửi
           </button>

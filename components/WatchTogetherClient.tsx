@@ -809,7 +809,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 relative transition-all duration-300 ${
+        className={`hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-30 relative transition-all duration-300 ${
           isChatHidden ? "w-0 p-0 overflow-hidden" : "p-3 md:p-4 gap-3 overflow-visible"
         }`}
         style={{ 
