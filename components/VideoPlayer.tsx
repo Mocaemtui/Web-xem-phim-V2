@@ -14,6 +14,7 @@ interface VideoPlayerProps {
   hasNextEpisode?: boolean;
   nextVideoUrl?: string;
   onAutoNext?: () => void;
+  isWatchTogether?: boolean;
 }
 
 export default function VideoPlayer({
@@ -26,7 +27,8 @@ export default function VideoPlayer({
   externalVideoRef,
   hasNextEpisode,
   nextVideoUrl,
-  onAutoNext
+  onAutoNext,
+  isWatchTogether
 }: VideoPlayerProps) {
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const videoRef = externalVideoRef || internalVideoRef;
@@ -707,18 +709,20 @@ export default function VideoPlayer({
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Aspect Ratio / Zoom Toggle */}
-                <button
-                  onClick={toggleZoomMode}
-                  className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${zoomMode !== "normal" ? "text-blue-400" : "text-zinc-500"}`}
-                  title={
-                    zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" : "Tỉ lệ: Phóng to đầy khung"
-                  }
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
-                  </svg>
-                </button>
+                {/* Aspect Ratio / Zoom Toggle (Watch Together Only) */}
+                {isWatchTogether && (
+                  <button
+                    onClick={toggleZoomMode}
+                    className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${zoomMode !== "normal" ? "text-blue-400" : "text-zinc-500"}`}
+                    title={
+                      zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" : "Tỉ lệ: Phóng to đầy khung"
+                    }
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
+                    </svg>
+                  </button>
+                )}
 
                 {/* Ambient Light Toggle */}
                 <button

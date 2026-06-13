@@ -292,7 +292,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div ref={containerRef} className="relative h-[100dvh] md:h-screen bg-zinc-950 flex flex-col overflow-hidden">
+    <div ref={containerRef} className="relative min-h-screen bg-zinc-950 flex flex-col overflow-y-auto scroll-smooth">
       {/* Global Background Ambient Glow Canvas */}
       {ambientActive && (
         <canvas
@@ -317,8 +317,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} containerRef={containerRef} />
 
 
-      {/* Main workspace: Side-by-side Player and Chat Sidebar */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden relative w-full">
+      {/* Main workspace: Side-by-side Player and Chat Sidebar (Fills the screen first fold) */}
+      <div className="h-screen w-full flex flex-col md:flex-row shrink-0 relative overflow-hidden">
         {/* Left Area: Video Player & Controls */}
         <div 
           className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
@@ -361,6 +361,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 poster={posterUrl}
                 videoUrl={currentEpisode.link_m3u8}
                 nextVideoUrl={serverData[currentEpisodeIndex + 1]?.link_m3u8}
+                isWatchTogether={true}
                 onPlaySync={() => {
                   if (hasSynced.current && !isReceivingEvent.current && videoRef.current) triggerPlay(videoRef.current.currentTime);
                 }}
@@ -580,9 +581,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Close the Side-by-side Video/Chat container */}
       </div>
 
-      {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only) */}
+      {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only, scroll down to see) */}
       {!isTheaterMode && (
-        <div className="hidden md:block w-full shrink-0 px-6 py-5 bg-zinc-950/60 border-t border-zinc-900/50 backdrop-blur-md relative z-20 max-h-[30vh] overflow-y-auto shadow-2xl">
+        <div className="hidden md:block w-full shrink-0 px-6 py-6 bg-zinc-950/60 border-t border-zinc-900/50 backdrop-blur-md relative z-20">
           {episodes.length > 0 && serverData.length > 0 && (
             <EpisodeSelector
               episodes={episodes}
