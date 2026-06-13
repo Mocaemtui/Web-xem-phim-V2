@@ -190,9 +190,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div className="h-[100dvh] md:min-h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden md:overflow-y-auto">
+    <div className="h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
       {/* Left Area: Video Player & Controls */}
-      <div className="flex-1 flex flex-col h-full md:h-auto overflow-hidden md:overflow-visible p-3 md:p-6">
+      <div className="flex-1 flex flex-col h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6">
         {/* Title and Share Link */}
         <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
           <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
@@ -200,15 +200,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </h1>
           <button
             onClick={copyLink}
-            className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-850 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0"
+            className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-855 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? "Đã copy" : "Mời bạn"}</span>
           </button>
         </div>
 
-        {/* Video Player */}
-        <div className="relative shrink-0 mb-3 md:mb-6">
+        {/* Video Player (Sticky top-0 on mobile, relative on desktop) */}
+        <div className="sticky top-0 md:relative shrink-0 mb-3 md:mb-6 z-20 bg-zinc-950 py-1 md:py-0">
           {currentEpisode ? (
             <>
               <FloatingReactions reactions={reactions} />
