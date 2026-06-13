@@ -11,7 +11,6 @@ interface SearchGridProps {
 
 export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
-  const [isLoadingNguonC, setIsLoadingNguonC] = useState(true);
   const [selectedSource, setSelectedSource] = useState<string>("all");
   const [lastKeyword, setLastKeyword] = useState("");
 
@@ -23,8 +22,6 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
         setSelectedSource("ophim");
       } else if (availableSources.has("phimapi")) {
         setSelectedSource("phimapi");
-      } else if (availableSources.has("nguonc")) {
-        setSelectedSource("nguonc");
       } else {
         setSelectedSource("all");
       }
@@ -32,42 +29,6 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     }
   }, [keyword, movies, lastKeyword]);
 
-  useEffect(() => {
-    const fetchNguonC = async () => {
-      try {
-        const res = await fetch(`https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(keyword)}`);
-        if (!res.ok) {
-          setIsLoadingNguonC(false);
-          return;
-        }
-        const data = await res.json();
-        
-        if (data && data.items && Array.isArray(data.items)) {
-          const newMovies: Movie[] = data.items.map((item: any) => ({
-            _id: item.id || Math.random().toString(),
-            name: item.name,
-            slug: item.slug,
-            origin_name: item.original_name || item.name,
-            poster_url: item.poster_url,
-            thumb_url: item.thumb_url,
-            year: item.year || '',
-            source: 'nguonc' // Tag source as NguonC
-          } as any));
-          
-          if (newMovies.length > 0) {
-            setMovies(prev => [...prev, ...newMovies]);
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi lấy NguonC Search (Client):", error);
-      } finally {
-        setIsLoadingNguonC(false);
-      }
-    };
-
-    fetchNguonC();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyword]);
 
   const filteredMovies = useMemo(() => {
     const getSmartKey = (item: Movie) => {
@@ -113,9 +74,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     if (selectedSource === "all") {
       const itemsMap = new Map<string, Movie>();
       
-      // Sort movies: 'ophim' first, then 'phimapi', then 'nguonc'
+      // Sort movies: 'ophim' first, then 'phimapi'
       const sortedMovies = [...processedMovies].sort((a: any, b: any) => {
-        const priority = { ophim: 3, phimapi: 2, nguonc: 1 } as any;
+        const priority = { ophim: 2, phimapi: 1 } as any;
         const priorityA = priority[(a as any).source] || 0;
         const priorityB = priority[(b as any).source] || 0;
         return priorityB - priorityA;
@@ -139,10 +100,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     { id: "all", name: "Tất cả" },
     { id: "ophim", name: "Ophim" },
     { id: "phimapi", name: "PhimAPI" },
-    { id: "nguonc", name: "NguonC" },
   ];
 
-  if (filteredMovies.length === 0 && !isLoadingNguonC) {
+  if (filteredMovies.length === 0) {
     return (
       <div>
         {/* Source Filter Tabs */}
@@ -194,17 +154,6 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
           <MovieCardWrapper key={movie._id} movie={movie} />
         ))}
       </div>
-      {isLoadingNguonC && (
-        <div className="mt-8 flex justify-center">
-          <div className="flex items-center gap-2 text-zinc-500">
-            <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span className="text-sm">Đang quét thêm MOCA MAX...</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

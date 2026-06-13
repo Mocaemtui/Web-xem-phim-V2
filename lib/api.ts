@@ -11,7 +11,6 @@ import type {
   Movie,
 } from "@/types/api";
 import { MOVIE_SOURCES, PRIMARY_SOURCE } from "./sources";
-import { searchNguonC, getChiTietPhimNguonC } from "./apiNguonC";
 
 const API_BASE_URL = PRIMARY_SOURCE.url;
 
@@ -275,13 +274,12 @@ export async function getDanhSach(
 export async function getChiTietPhim(
   slug: string
 ): Promise<ApiResponse<{ item: MovieDetail }> | null> {
-  let [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
+  let [ophimRes, phimapiRes] = await Promise.all([
     fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.OPHIM.url),
-    fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url),
-    getChiTietPhimNguonC(slug)
+    fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url)
   ]);
 
-  let baseMovie: MovieDetail | null = ophimRes?.data?.item || phimapiRes?.data?.item || nguoncRes || null;
+  let baseMovie: MovieDetail | null = ophimRes?.data?.item || phimapiRes?.data?.item || null;
 
   // --- SMART CROSS-API MATCHING (FALLBACK) ---
   if (baseMovie) {
@@ -325,11 +323,6 @@ export async function getChiTietPhim(
   if (phimapiRes?.data?.item) {
     if (!baseMovie) baseMovie = phimapiRes.data.item;
     allEpisodes.push(...(phimapiRes.data.item.episodes?.map(e => ({ ...e, server_name: `PhimAPI - ${e.server_name}` })) || []));
-  }
-
-  if (nguoncRes) {
-    if (!baseMovie) baseMovie = nguoncRes;
-    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `NguonC - ${e.server_name}` })) || []));
   }
 
   if (!baseMovie) return null;

@@ -19,10 +19,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "phimimg.com",
       },
-      {
-        protocol: "https",
-        hostname: "phim.nguonc.com",
-      },
     ],
   },
 };
