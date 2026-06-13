@@ -28,6 +28,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [chatWidth, setChatWidth] = useState(384);
   const [ambientActive, setAmbientActive] = useState(true);
+  const [showWatchers, setShowWatchers] = useState(false);
+  const [showEmojis, setShowEmojis] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -535,37 +537,69 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       >
 
 
-        <div className="p-2.5 bg-transparent border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-400 shrink-0" />
-            <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto flex-1">
-              {watchers.map((w) => (
-                <div key={w.id} className="flex items-center gap-1 bg-zinc-800/60 px-2 py-0.5 rounded-full text-xs text-zinc-300">
-                  <span>{w.name}</span>
+        {/* Sleek controls row: Watchers & Emojis Popovers */}
+        <div className="flex items-center gap-2 justify-end relative z-20 shrink-0">
+          
+          {/* Watchers Popover */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowWatchers(prev => !prev);
+                setShowEmojis(false);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${showWatchers ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>{watchers.length}</span>
+            </button>
+
+            {showWatchers && (
+              <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-3 rounded-lg shadow-2xl z-30 min-w-[180px] max-w-[240px]">
+                <h4 className="text-[11px] font-semibold text-zinc-400 mb-2 border-b border-zinc-900 pb-1">Người xem ({watchers.length})</h4>
+                <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
+                  {watchers.map((w) => (
+                    <div key={w.id} className="text-xs text-zinc-300 py-0.5 truncate">
+                      {w.name}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
+
+          {/* Emojis Popover */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowEmojis(prev => !prev);
+                setShowWatchers(false);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${showEmojis ? "bg-zinc-800/80 border-zinc-700 text-blue-400" : "bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"}`}
+            >
+              <Smile className="w-3.5 h-3.5" />
+            </button>
+
+            {showEmojis && (
+              <div className="absolute right-0 top-9 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/40 p-2 rounded-lg shadow-2xl z-30 min-w-[200px]">
+                <div className="grid grid-cols-5 gap-1.5 justify-items-center">
+                  {EMOJIS.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        triggerReaction(emoji);
+                        setShowEmojis(false);
+                      }}
+                      className="text-lg hover:scale-125 active:scale-95 transition-transform duration-100 cursor-pointer"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
-
-
-        {/* Reaction Bar */}
-        {isJoined && (
-          <div className="px-4 py-1.5 bg-transparent border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
-            <div className="grid grid-cols-5 gap-2 w-full justify-items-center py-1">
-
-              {EMOJIS.map(emoji => (
-                <button
-                  key={emoji}
-                  onClick={() => triggerReaction(emoji)}
-                  className="text-xl hover:scale-125 active:scale-95 transition-transform duration-150 cursor-pointer"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
 
         <div className="flex-1 overflow-hidden p-0 relative z-10">
