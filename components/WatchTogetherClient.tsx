@@ -225,6 +225,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
   const pendingSyncTimeRef = useRef<number | null>(null);
   const pendingSyncPlayingRef = useRef<boolean | null>(null);
+  const hasRequestedSyncAfterEpisodeChange = useRef(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -250,17 +251,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             isReceivingEvent.current = false;
           }, 1500);
         }, 300);
+      } else if (!hasSynced.current && !hasRequestedSyncAfterEpisodeChange.current) {
+        hasRequestedSyncAfterEpisodeChange.current = true;
+        setTimeout(() => {
+          isReceivingEvent.current = false;
+          triggerRequestSync();
+        }, 800);
       }
     };
 
     video.addEventListener("loadedmetadata", applyPendingSync);
     video.addEventListener("loadeddata", applyPendingSync);
     video.addEventListener("canplay", applyPendingSync);
-
-    // If metadata is already loaded, apply it immediately
-    if (video.readyState >= 1) {
-      applyPendingSync();
-    }
 
     return () => {
       video.removeEventListener("loadedmetadata", applyPendingSync);
@@ -443,6 +445,9 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     };
 
     onChangeEpisodeRef.current = (serverIndex, episodeIndex) => {
+      hasSynced.current = false;
+      hasRequestedSyncAfterEpisodeChange.current = false;
+      isReceivingEvent.current = true;
       setCurrentServerIndex(serverIndex);
       setCurrentEpisodeIndex(episodeIndex);
     };
@@ -493,6 +498,29 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       }
     }
   }, [isJoined, currentEpisode, roomId]);
+
+  const handleSelectEpisode = (idx: number) => {
+    hasSynced.current = false;
+    hasRequestedSyncAfterEpisodeChange.current = false;
+    isReceivingEvent.current = true;
+    setCurrentEpisodeIndex(idx);
+    triggerChangeEpisode(currentServerIndex, idx);
+  };
+
+  const handleSelectServer = (idx: number) => {
+    hasSynced.current = false;
+    hasRequestedSyncAfterEpisodeChange.current = false;
+    isReceivingEvent.current = true;
+    setCurrentServerIndex(idx);
+    setCurrentEpisodeIndex(0);
+    triggerChangeEpisode(idx, 0);
+    if (typeof window !== "undefined") {
+      const preferred = episodes[idx]?.server_name;
+      if (preferred) {
+        localStorage.setItem("preferred_server_name", preferred);
+      }
+    }
+  };
 
   const handleHostSyncConfirm = () => {
     if (hostSavedTime) {
@@ -832,21 +860,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                       episodes={episodes}
                       currentServerIndex={currentServerIndex}
                       currentEpisodeIndex={currentEpisodeIndex}
-                      onSelectEpisode={(idx) => {
-                        setCurrentEpisodeIndex(idx);
-                        triggerChangeEpisode(currentServerIndex, idx);
-                      }}
-                      onSelectServer={(idx) => {
-                        setCurrentServerIndex(idx);
-                        setCurrentEpisodeIndex(0);
-                        triggerChangeEpisode(idx, 0);
-                        if (typeof window !== "undefined") {
-                          const preferred = episodes[idx]?.server_name;
-                          if (preferred) {
-                            localStorage.setItem("preferred_server_name", preferred);
-                          }
-                        }
-                      }}
+                      onSelectEpisode={handleSelectEpisode}
+                      onSelectServer={handleSelectServer}
                     />
                   )}
                 </div>
@@ -1016,21 +1031,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
               episodes={episodes}
               currentServerIndex={currentServerIndex}
               currentEpisodeIndex={currentEpisodeIndex}
-              onSelectEpisode={(idx) => {
-                setCurrentEpisodeIndex(idx);
-                triggerChangeEpisode(currentServerIndex, idx);
-              }}
-              onSelectServer={(idx) => {
-                setCurrentServerIndex(idx);
-                setCurrentEpisodeIndex(0);
-                triggerChangeEpisode(idx, 0);
-                if (typeof window !== "undefined") {
-                  const preferred = episodes[idx]?.server_name;
-                  if (preferred) {
-                    localStorage.setItem("preferred_server_name", preferred);
-                  }
-                }
-              }}
+                      onSelectEpisode={handleSelectEpisode}
+                      onSelectServer={handleSelectServer}
             />
           )}
         </div>
