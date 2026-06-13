@@ -123,7 +123,7 @@ function FilterContent() {
     if (newFilters.phienBan) params.set("phienBan", newFilters.phienBan);
     if (newFilters.sortField) params.set("sortField", newFilters.sortField);
     
-    router.push(`/filter?${params.toString()}`);
+    router.push(`/filter?${params.toString()}`, { scroll: false });
     setCurrentPage(1);
   };
 

@@ -56,6 +56,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
     sortField?: string;
   }>({});
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isDesktopOpen, setIsDesktopOpen] = useState(true);
 
   useEffect(() => {
     if (initialFilters) {
@@ -87,20 +88,6 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
   const clearAllFilters = () => {
     setSelectedFilters({});
     onFilterChange({});
-  };
-
-  const applyFilters = () => {
-    onFilterChange({
-      theLoai: selectedFilters.theLoaiSlug,
-      quocGia: selectedFilters.quocGiaSlug,
-      year: selectedFilters.year,
-      loaiPhim: selectedFilters.loaiPhim,
-      phienBan: selectedFilters.phienBan,
-      sortField: selectedFilters.sortField,
-    });
-    if (window.innerWidth < 1024) {
-      setIsMobileOpen(false);
-    }
   };
 
   const hasActiveFilters = Object.values(selectedFilters).some(
@@ -161,9 +148,13 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
               </span>
             )}
           </button>
-          <h2 className="hidden lg:flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-white">
+          <button
+            className="hidden lg:flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-white cursor-pointer hover:text-blue-500 transition-colors"
+            onClick={() => setIsDesktopOpen(!isDesktopOpen)}
+          >
             <Filter className="w-5 h-5 text-blue-500" /> Bộ Lọc Phim
-          </h2>
+            {isDesktopOpen ? <ChevronUp className="w-5 h-5 ml-1 text-gray-500" /> : <SlidersHorizontal className="w-5 h-5 ml-1 text-gray-500" />}
+          </button>
         </div>
         {hasActiveFilters && (
           <button
@@ -179,7 +170,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
       <div
         className={`space-y-5 overflow-y-auto max-h-[70vh] lg:max-h-none lg:overflow-visible ${
           isMobileOpen ? "block" : "hidden"
-        } lg:block`}
+        } ${isDesktopOpen ? "lg:block" : "lg:hidden"}`}
       >
         {renderFilterGroup("Quốc gia", "quocGiaSlug", quocGiaList)}
         {renderFilterGroup("Loại phim", "loaiPhim", LOAI_PHIM_LIST)}
@@ -187,14 +178,6 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
         {renderFilterGroup("Phiên bản", "phienBan", PHIEN_BAN_LIST)}
         {renderFilterGroup("Sắp xếp", "sortField", SAP_XEP_LIST)}
 
-        <div className="pt-4 mt-2 border-t dark:border-gray-700 flex justify-center lg:justify-start">
-          <button
-            onClick={applyFilters}
-            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-8 py-2.5 rounded-lg font-bold transition-all transform hover:scale-105 active:scale-95 w-full lg:w-auto justify-center shadow-lg shadow-blue-500/30"
-          >
-            <Filter className="w-4 h-4" /> Lọc kết quả
-          </button>
-        </div>
       </div>
     </div>
   );
