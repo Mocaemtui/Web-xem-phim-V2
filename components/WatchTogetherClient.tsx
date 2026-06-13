@@ -42,6 +42,11 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const [isChatHidden, setIsChatHidden] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [newMessageNotification, setNewMessageNotification] = useState<string | null>(null);
+  
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  useEffect(() => {
+    setIsMobileDevice(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+  }, []);
 
   // Auto-hide Top Controls in Theater Mode on inactivity
   const [showTopControls, setShowTopControls] = useState(true);
@@ -500,6 +505,30 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     hasSynced.current = false;
     triggerRequestSync();
   };
+
+  if (isMobileDevice) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
+          <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-3">Xem chung không hỗ trợ trên điện thoại</h2>
+          <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
+            Tính năng phòng xem chung (Watch Together) hiện tại chỉ hỗ trợ tốt nhất trên máy tính (PC / Laptop). Vui lòng chuyển sang máy tính để tham gia cùng bạn bè.
+          </p>
+          <a
+            href="/"
+            className="inline-block bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all"
+          >
+            Quay lại trang chủ
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (!isJoined) {
     return (

@@ -141,23 +141,6 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
           )}
         </div>
 
-        {/* Episode Selector */}
-        <div className="relative z-30">
-          {episodes.length > 0 && serverData.length > 0 ? (
-            <EpisodeSelector
-              episodes={episodes}
-              currentServerIndex={currentServerIndex}
-              currentEpisodeIndex={currentEpisodeIndex}
-              onSelectEpisode={handleEpisodeSelect}
-              onSelectServer={handleServerChange}
-            />
-          ) : (
-            <div className="mb-8 p-4 bg-zinc-900 rounded-lg">
-              <p className="text-zinc-400 text-sm">Không có tập phim nào</p>
-            </div>
-          )}
-        </div>
-
         {/* Movie Info */}
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
@@ -226,6 +209,23 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
               className="text-zinc-300 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: movie.content }}
             />
+          )}
+        </div>
+
+        {/* Episode Selector */}
+        <div className="relative z-30">
+          {episodes.length > 0 && serverData.length > 0 ? (
+            <EpisodeSelector
+              episodes={episodes}
+              currentServerIndex={currentServerIndex}
+              currentEpisodeIndex={currentEpisodeIndex}
+              onSelectEpisode={handleEpisodeSelect}
+              onSelectServer={handleServerChange}
+            />
+          ) : (
+            <div className="mb-8 p-4 bg-zinc-900 rounded-lg">
+              <p className="text-zinc-400 text-sm">Không có tập phim nào</p>
+            </div>
           )}
         </div>
       </div>
