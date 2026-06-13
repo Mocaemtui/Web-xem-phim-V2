@@ -48,7 +48,7 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
 
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950/10 backdrop-blur-md rounded-lg overflow-hidden border border-zinc-900/10 shadow-none">
+    <div className="flex flex-col h-full bg-zinc-950/10 backdrop-blur-md rounded-lg overflow-hidden border-none shadow-none">
       <div className="p-4 border-b border-zinc-900/10 bg-transparent">
         <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
       </div>

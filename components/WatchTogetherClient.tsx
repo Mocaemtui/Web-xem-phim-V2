@@ -319,7 +319,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
           isTheaterMode 
             ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
-            : "h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6 bg-transparent"
+            : "h-full md:h-screen overflow-hidden p-3 md:p-6 bg-transparent"
         }`}
         onDoubleClick={() => setIsTheaterMode(prev => !prev)}
       >
@@ -420,7 +420,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Desktop-only Episode Selector */}
         {!isTheaterMode && (
-          <div className="hidden md:block w-full">
+          <div className="hidden md:block w-full mt-auto max-h-[35vh] overflow-y-auto pr-1 shrink-0">
             {episodes.length > 0 && serverData.length > 0 && (
               <EpisodeSelector
                 episodes={episodes}
@@ -525,7 +525,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                     {watchers.map((w) => (
                       <div key={w.id} className="flex items-center gap-1.5 bg-zinc-800 px-3 py-1.5 rounded-full text-xs">
                         <span className="text-zinc-200">{w.name}</span>
-                        {w.name === username && <span className="text-zinc-500">(Bạn)</span>}
                       </div>
                     ))}
                   </div>
@@ -550,14 +549,13 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       >
 
 
-        <div className="p-2.5 bg-zinc-950/10 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
+        <div className="p-2.5 bg-zinc-950/10 backdrop-blur-md border-none rounded-lg shrink-0 relative z-10">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-400 shrink-0" />
             <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto flex-1">
               {watchers.map((w) => (
                 <div key={w.id} className="flex items-center gap-1 bg-zinc-800/60 px-2 py-0.5 rounded-full text-xs text-zinc-300">
                   <span>{w.name}</span>
-                  {w.name === username && <span className="text-[10px] text-zinc-500 font-medium ml-0.5">(bạn)</span>}
                 </div>
               ))}
             </div>
@@ -567,7 +565,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Reaction Bar */}
         {isJoined && (
-          <div className="px-4 py-1.5 bg-zinc-950/5 backdrop-blur-md border border-zinc-900/10 rounded-lg shrink-0 relative z-10">
+          <div className="px-4 py-1.5 bg-zinc-950/5 backdrop-blur-md border-none rounded-lg shrink-0 relative z-10">
             <div className="grid grid-cols-5 gap-2 w-full justify-items-center py-1">
 
               {EMOJIS.map(emoji => (
