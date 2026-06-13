@@ -42,8 +42,8 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
-      <div className="p-4 border-b border-zinc-800 bg-zinc-950/50">
+    <div className="flex flex-col h-full bg-zinc-900/30 backdrop-blur-md rounded-lg overflow-hidden border border-zinc-800/30">
+      <div className="p-4 border-b border-zinc-800/30 bg-zinc-950/20">
         <h3 className="font-semibold text-zinc-200">Trò chuyện trực tiếp</h3>
       </div>
       
@@ -91,14 +91,14 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
         )}
       </div>
 
-      <div className="p-3 bg-zinc-950/50 border-t border-zinc-800">
+      <div className="p-3 bg-zinc-950/20 border-t border-zinc-800/30">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
             value={text}
             onChange={handleChange}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-zinc-800 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
+            className="flex-1 bg-zinc-800/50 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
           />
           <button
             type="submit"
@@ -112,3 +112,4 @@ export default function RoomChat({ messages, typingUsers, onSendMessage, onTypin
     </div>
   );
 }
+

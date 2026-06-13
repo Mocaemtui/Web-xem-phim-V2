@@ -500,16 +500,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       {/* Resizable Divider line */}
       <div 
         onMouseDown={startResizing} 
-        className="hidden md:block w-1 hover:w-1.5 bg-zinc-800/40 hover:bg-blue-600/50 cursor-col-resize transition-all duration-150 h-screen shrink-0 z-40 relative border-l border-r border-zinc-900/10" 
+        className="hidden md:block w-1.5 cursor-col-resize h-screen shrink-0 z-40 relative bg-transparent hover:bg-blue-500/20 transition-all duration-150" 
       />
 
       {/* Right Area: Desktop Sidebar */}
       <div 
-        className="hidden md:flex border-l border-zinc-850/35 bg-zinc-950/30 backdrop-blur-xl flex-col h-screen shrink-0 z-10"
+        className="hidden md:flex bg-transparent flex-col h-screen shrink-0 z-10 p-3 md:p-4 gap-3"
         style={{ width: `${chatWidth}px` }}
       >
-
-        <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
+        <div className="p-4 bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-400" />
@@ -528,7 +527,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
 
         {/* Reaction Bar */}
         {isJoined && (
-          <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/20">
+          <div className="px-4 py-2 bg-zinc-900/20 backdrop-blur-md border border-zinc-800/30 rounded-lg shrink-0">
             <div className="flex flex-wrap items-center gap-2 justify-center py-2 bg-zinc-900/40 rounded-lg border border-zinc-800/60">
               {EMOJIS.map(emoji => (
                 <button
@@ -543,7 +542,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </div>
         )}
 
-        <div className="flex-1 overflow-hidden p-4">
+        <div className="flex-1 overflow-hidden p-0">
           <RoomChat 
             messages={messages} 
             typingUsers={typingUsers}
@@ -552,6 +551,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           />
         </div>
       </div>
+
     </div>
   );
 }
