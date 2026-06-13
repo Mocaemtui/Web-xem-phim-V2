@@ -103,8 +103,7 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
   const renderFilterGroup = (
     title: string,
     type: keyof typeof selectedFilters,
-    items: { name: string | number; slug?: string }[],
-    isYear: boolean = false
+    items: { name: string; slug: string }[]
   ) => {
     return (
       <div>
@@ -112,32 +111,19 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
           <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm sm:text-base">{title}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
-          <button
-            onClick={() => handleFilterSelect(type, selectedFilters[type] || '')}
-            className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
-              !selectedFilters[type]
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
-          >
-            Tất cả
-          </button>
-          {items.map((item) => {
-            const val = isYear ? item.toString() : (item as any).slug;
-            return (
-              <button
-                key={val}
-                onClick={() => handleFilterSelect(type, val)}
-                className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
-                  selectedFilters[type] === val
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
-                }`}
-              >
-                {item.name || item}
-              </button>
-            );
-          })}
+          {items.map((item) => (
+            <button
+              key={item.slug}
+              onClick={() => handleFilterSelect(type, item.slug)}
+              className={`px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs sm:text-sm rounded-md transition-all ${
+                selectedFilters[type] === item.slug
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              {item.name}
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -188,7 +174,6 @@ export default function FilterPanel({ theLoaiList, quocGiaList, initialFilters, 
         {renderFilterGroup("Loại phim", "loaiPhim", LOAI_PHIM_LIST)}
         {renderFilterGroup("Thể loại", "theLoaiSlug", theLoaiList)}
         {renderFilterGroup("Phiên bản", "phienBan", PHIEN_BAN_LIST)}
-        {renderFilterGroup("Năm phát hành", "year", NAM_PHAT_HANH.map(y => ({ name: y.toString(), slug: y.toString() })) as any, true)}
         {renderFilterGroup("Sắp xếp", "sortField", SAP_XEP_LIST)}
 
         <div className="pt-4 mt-2 border-t dark:border-gray-700 flex justify-center lg:justify-start">
