@@ -199,7 +199,7 @@ export default function VideoPlayer({
 
   // Load saved playback progress
   useEffect(() => {
-    if (!videoUrl) return;
+    if (!videoUrl || isWatchTogether) return;
     try {
       const key = `playback_progress_${videoUrl}`;
       const saved = localStorage.getItem(key);
@@ -231,7 +231,7 @@ export default function VideoPlayer({
     }
     setSavedTime(null);
     setShowResumePrompt(false);
-  }, [videoUrl, videoRef]);
+  }, [videoUrl, videoRef, isWatchTogether]);
 
   // Prefetch next episode manifest when 90% through current video
   useEffect(() => {

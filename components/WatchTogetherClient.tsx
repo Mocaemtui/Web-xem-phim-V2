@@ -230,7 +230,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     const video = videoRef.current;
     if (!video) return;
 
-    const handleLoadedMetadata = () => {
+    const applyPendingSync = () => {
       if (pendingSyncTimeRef.current !== null) {
         isReceivingEvent.current = true;
         video.currentTime = pendingSyncTimeRef.current;
@@ -253,11 +253,21 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       }
     };
 
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("loadedmetadata", applyPendingSync);
+    video.addEventListener("loadeddata", applyPendingSync);
+    video.addEventListener("canplay", applyPendingSync);
+
+    // If metadata is already loaded, apply it immediately
+    if (video.readyState >= 1) {
+      applyPendingSync();
+    }
+
     return () => {
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("loadedmetadata", applyPendingSync);
+      video.removeEventListener("loadeddata", applyPendingSync);
+      video.removeEventListener("canplay", applyPendingSync);
     };
-  }, [currentEpisode, videoRef]);
+  }, [videoRef]);
   
   // Mọi người đều là Host
   const {
