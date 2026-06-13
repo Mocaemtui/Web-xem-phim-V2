@@ -453,10 +453,15 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                   setShowWatchers(false);
                   setShowEmojis(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
+                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border bg-zinc-900/30 border-zinc-900/20 text-zinc-400 hover:text-zinc-200"
                 title="Hiện cuộc trò chuyện"
               >
                 <Eye className="w-3.5 h-3.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] border border-zinc-950 animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
             </div>
@@ -762,19 +767,6 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
             />
           )}
         </div>
-      )}
-    {/* New Message Toast Notification Alert */}
-      {newMessageNotification && (
-        <button
-          onClick={() => {
-            setIsChatHidden(false);
-            setNewMessageNotification(null);
-          }}
-          className="fixed bottom-24 right-6 bg-blue-600/90 hover:bg-blue-700/90 backdrop-blur-md text-white border border-blue-500/30 px-4 py-2.5 rounded-xl shadow-2xl z-50 text-xs flex items-center gap-2 animate-bounce cursor-pointer"
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>{newMessageNotification} ({unreadCount}) (Nhấn để xem)</span>
-        </button>
       )}
     </div>
   );
