@@ -79,17 +79,20 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   useEffect(() => {
     let animationFrameId: number;
     let lastDrawTime = 0;
+    let cachedCtx: CanvasRenderingContext2D | null = null;
 
     const drawFrame = (now: number) => {
       const video = videoRef.current;
       const canvas1 = ambientCanvasRef.current;
 
-      if (video && isJoined) {
-        const ctx1 = canvas1 ? canvas1.getContext("2d", { willReadFrequently: false }) : null;
+      if (video && canvas1 && isJoined) {
+        if (!cachedCtx) {
+          cachedCtx = canvas1.getContext("2d", { willReadFrequently: false });
+        }
 
-        if (!video.paused && !video.ended && now - lastDrawTime >= 66) {
+        if (cachedCtx && !video.paused && !video.ended && now - lastDrawTime >= 66) {
           try {
-            if (canvas1 && ctx1) ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+            cachedCtx.drawImage(video, 0, 0, canvas1.width, canvas1.height);
             lastDrawTime = now;
           } catch (err) {
             // Ignore CORS
