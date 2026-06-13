@@ -8,16 +8,20 @@ import type {
   Genre,
   Country,
   Year,
+  Movie,
 } from "@/types/api";
+import { MOVIE_SOURCES, PRIMARY_SOURCE } from "./sources";
+import { searchNguonC, getChiTietPhimNguonC } from "./apiNguonC";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://ophim1.com";
+const API_BASE_URL = PRIMARY_SOURCE.url;
 
 export async function fetchAPI<T>(
   endpoint: string,
-  revalidate: number = 3600
+  revalidate: number = 3600,
+  customBaseUrl?: string
 ): Promise<ApiResponse<T> | null> {
   try {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${customBaseUrl || API_BASE_URL}${endpoint}`;
     
     const response = await fetch(url, {
       next: { revalidate }, // Cache API theo thời gian cấu hình
@@ -120,8 +124,48 @@ export async function getPhimTrung(
 export async function searchPhim(
   keyword: string
 ): Promise<ApiResponse<MovieListResponse> | null> {
-  // Tìm kiếm cần cập nhật nhanh, cache 60 giây
-  return fetchAPI<MovieListResponse>(`/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`, 60);
+  const endpoint = `/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`;
+  
+  const [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
+    fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.OPHIM.url),
+    fetchAPI<MovieListResponse>(endpoint, 60, MOVIE_SOURCES.PHIMAPI.url),
+    searchNguonC(keyword)
+  ]);
+
+  const itemsMap = new Map<string, Movie>();
+
+  const addItems = (res: any) => {
+    if (res?.data?.items) {
+      res.data.items.forEach((item: Movie) => {
+        if (!itemsMap.has(item.slug)) itemsMap.set(item.slug, item);
+      });
+    } else if (res?.items) {
+      res.items.forEach((item: Movie) => {
+        if (!itemsMap.has(item.slug)) itemsMap.set(item.slug, item);
+      });
+    }
+  };
+
+  addItems(ophimRes);
+  addItems(phimapiRes);
+  addItems(nguoncRes);
+
+  if (itemsMap.size === 0) return null;
+
+  return {
+    status: "success",
+    data: {
+      items: Array.from(itemsMap.values()),
+      params: {
+        pagination: {
+          totalItems: itemsMap.size,
+          totalItemsPerPage: itemsMap.size,
+          currentPage: 1,
+          pageRanges: 1
+        }
+      }
+    }
+  };
 }
 
 export async function getTheLoai(): Promise<ApiResponse<{ items: Genre[] }> | null> {
@@ -227,8 +271,38 @@ export async function getDanhSach(
 export async function getChiTietPhim(
   slug: string
 ): Promise<ApiResponse<{ item: MovieDetail }> | null> {
-  // Chi tiết phim rất ít thay đổi, cache 24 giờ để tăng tốc truy cập
-  return fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400);
+  const [ophimRes, phimapiRes, nguoncRes] = await Promise.all([
+    fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.OPHIM.url),
+    fetchAPI<{ item: MovieDetail }>(`/v1/api/phim/${slug}`, 86400, MOVIE_SOURCES.PHIMAPI.url),
+    getChiTietPhimNguonC(slug)
+  ]);
+
+  let baseMovie: MovieDetail | null = null;
+  const allEpisodes: any[] = [];
+
+  if (ophimRes?.data?.item) {
+    baseMovie = ophimRes.data.item;
+    allEpisodes.push(...baseMovie.episodes.map(e => ({ ...e, server_name: `Ophim - ${e.server_name}` })));
+  }
+  
+  if (phimapiRes?.data?.item) {
+    if (!baseMovie) baseMovie = phimapiRes.data.item;
+    allEpisodes.push(...phimapiRes.data.item.episodes.map(e => ({ ...e, server_name: `PhimAPI - ${e.server_name}` })));
+  }
+
+  if (nguoncRes) {
+    if (!baseMovie) baseMovie = nguoncRes;
+    allEpisodes.push(...nguoncRes.episodes);
+  }
+
+  if (!baseMovie) return null;
+
+  baseMovie.episodes = allEpisodes;
+
+  return {
+    status: "success",
+    data: { item: baseMovie }
+  };
 }
 
 export async function getHinhAnhPhim(
