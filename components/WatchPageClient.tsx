@@ -161,7 +161,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
         {/* Movie Info */}
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-            {movie.name}
+            {movie.name} - {currentEpisode?.name || `Tập ${currentEpisodeIndex + 1}`}
           </h1>
           {movie.origin_name && (
             <p className="text-lg text-zinc-400 mb-4">{movie.origin_name}</p>

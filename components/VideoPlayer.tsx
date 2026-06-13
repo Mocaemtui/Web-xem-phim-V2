@@ -41,6 +41,11 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+  }, []);
 
   // Web Audio API for Volume Boost (200%) & Distortion Reduction
   const audioContextRef = useRef<any>(null);
@@ -445,24 +450,48 @@ export default function VideoPlayer({
     resetControlsTimer();
   };
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const prevVolumeRef = useRef(1);
+
+  const updateVolume = (vol: number) => {
     const video = videoRef.current;
     if (!video) return;
-    const vol = parseFloat(e.target.value);
-    
-    if (vol <= 1) {
+
+    if (vol <= 0.01) {
+      video.volume = 0;
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 1;
+      }
+      setVolume(0);
+    } else if (vol <= 1) {
       video.volume = vol;
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 1;
       }
+      setVolume(vol);
     } else {
-      video.volume = 1; // max native volume
+      video.volume = 1;
       if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = vol; // boost up to 2.0
+        gainNodeRef.current.gain.value = vol;
       }
+      setVolume(vol);
     }
-    
-    setVolume(vol);
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (volume > 0) {
+      prevVolumeRef.current = volume;
+      updateVolume(0);
+    } else {
+      updateVolume(prevVolumeRef.current || 1);
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const vol = parseFloat(e.target.value);
+    updateVolume(vol);
     resetControlsTimer();
   };
 
@@ -613,16 +642,14 @@ export default function VideoPlayer({
           break;
         case "arrowup":
           e.preventDefault();
-          const newVolUp = Math.min(1, video.volume + 0.1);
-          video.volume = newVolUp;
-          setVolume(newVolUp);
+          const newVolUp = Math.min(2, volume + 0.1);
+          updateVolume(newVolUp);
           resetControlsTimer();
           break;
         case "arrowdown":
           e.preventDefault();
-          const newVolDown = Math.max(0, video.volume - 0.1);
-          video.volume = newVolDown;
-          setVolume(newVolDown);
+          const newVolDown = Math.max(0, volume - 0.1);
+          updateVolume(newVolDown);
           resetControlsTimer();
           break;
         case "f":
@@ -631,14 +658,7 @@ export default function VideoPlayer({
           break;
         case "m":
           e.preventDefault();
-          const isMuted = video.volume === 0;
-          if (isMuted) {
-            video.volume = 0.5;
-            setVolume(0.5);
-          } else {
-            video.volume = 0;
-            setVolume(0);
-          }
+          toggleMute();
           resetControlsTimer();
           break;
         default:
@@ -691,6 +711,7 @@ export default function VideoPlayer({
               ref={videoRef}
               poster={poster}
               crossOrigin="anonymous"
+              controls={isMobile}
               onTouchStart={(e) => {
                 // Double Tap to Seek on Mobile
                 const touch = e.touches[0];
@@ -853,7 +874,7 @@ export default function VideoPlayer({
         )}
 
         {/* Custom Controls - only show for video element */}
-        {videoUrl && (
+        {videoUrl && !isMobile && (
           <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 z-20 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
             {/* Progress Bar */}
             <div className="mb-3">
