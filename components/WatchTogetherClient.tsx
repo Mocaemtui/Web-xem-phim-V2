@@ -524,16 +524,18 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       </div>
 
       {/* Resizable Divider handle (Absolutely positioned to overlap seamlessly, eliminating any black layout gap) */}
-      <div 
-        onMouseDown={startResizing} 
-        className="hidden md:block absolute top-0 bottom-0 w-2 cursor-col-resize z-50 bg-transparent hover:bg-blue-500/20 transition-all duration-150" 
-        style={{ right: `${chatWidth - 4}px` }}
-      />
+      {!isTheaterMode && (
+        <div 
+          onMouseDown={startResizing} 
+          className="hidden md:block absolute top-0 bottom-0 w-2 cursor-col-resize z-50 bg-transparent hover:bg-blue-500/20 transition-all duration-150" 
+          style={{ right: `${chatWidth - 4}px` }}
+        />
+      )}
 
       {/* Right Area: Desktop Sidebar */}
       <div 
         className="hidden md:flex bg-transparent flex-col min-h-0 shrink-0 z-10 p-3 md:p-4 gap-3 relative overflow-hidden"
-        style={{ width: `${chatWidth}px` }}
+        style={{ width: isTheaterMode ? "260px" : `${chatWidth}px`, backgroundColor: "transparent" }}
       >
 
 
