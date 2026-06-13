@@ -348,9 +348,15 @@ export default function VideoPlayer({
       if (video.paused) {
         setShowControls(true);
         if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+        if (onPauseSync) onPauseSync();
       } else {
         resetControlsTimer();
+        if (onPlaySync) onPlaySync();
       }
+    };
+
+    const onSeeked = () => {
+      if (onSeekSync) onSeekSync(video.currentTime);
     };
 
     const onWaiting = () => {
@@ -363,19 +369,21 @@ export default function VideoPlayer({
 
     video.addEventListener("play", onPlayStateChange);
     video.addEventListener("pause", onPlayStateChange);
+    video.addEventListener("seeked", onSeeked);
     video.addEventListener("waiting", onWaiting);
     video.addEventListener("playing", onPlaying);
 
     return () => {
       video.removeEventListener("play", onPlayStateChange);
       video.removeEventListener("pause", onPlayStateChange);
+      video.removeEventListener("seeked", onSeeked);
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("playing", onPlaying);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
     };
-  }, [videoRef, onBuffering]);
+  }, [videoRef, onBuffering, onPlaySync, onPauseSync, onSeekSync]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -417,12 +425,8 @@ export default function VideoPlayer({
 
     if (video.paused) {
       video.play().catch(() => {});
-      setIsPlaying(true);
-      if (onPlaySync) onPlaySync();
     } else {
       video.pause();
-      setIsPlaying(false);
-      if (onPauseSync) onPauseSync();
     }
   };
 
@@ -450,7 +454,6 @@ export default function VideoPlayer({
     const time = parseFloat(e.target.value);
     video.currentTime = time;
     setCurrentTime(time);
-    if (onSeekSync) onSeekSync(time);
     resetControlsTimer();
   };
 
