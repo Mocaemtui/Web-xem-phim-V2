@@ -191,21 +191,48 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div className="h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+    <div className="fixed md:relative inset-0 md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
       {isTheaterMode && (
         <style dangerouslySetInnerHTML={{__html: `
           header { display: none !important; }
         `}} />
       )}
       
-      {/* Left Area: Video Player & Controls */}
-      <div className={`flex-1 flex flex-col h-full md:h-screen overflow-hidden md:overflow-y-auto transition-all duration-300 ${isTheaterMode ? "p-0 bg-black" : "p-3 md:p-6"}`}>
-        
-        {/* Mobile Spacer (holds height for fixed top video player on mobile) */}
-        <div className="h-[calc(56.25vw+16px)] md:hidden shrink-0" />
+      {/* Keyboard focus scroll locking & Esc key listener */}
+      <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} />
 
-        {/* Video Player (Fixed top-0 on mobile, relative on desktop) */}
-        <div className="fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6">
+      {/* Left Area: Video Player & Controls */}
+      <div 
+        className={`flex-1 flex flex-col transition-all duration-300 group/theater relative ${
+          isTheaterMode 
+            ? "h-screen w-full p-0 bg-black overflow-hidden justify-center items-center" 
+            : "h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6"
+        }`}
+        onDoubleClick={() => setIsTheaterMode(prev => !prev)}
+      >
+        {isTheaterMode && (
+          <button
+            onClick={() => setIsTheaterMode(false)}
+            className="absolute top-4 right-4 z-50 bg-black/60 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition-all duration-300 opacity-0 group-hover/theater:opacity-100 pointer-events-none group-hover/theater:pointer-events-auto shadow-lg flex items-center justify-center cursor-pointer"
+            title="Thu nhỏ (Esc)"
+          >
+            <svg className="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 12v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6" />
+            </svg>
+          </button>
+        )}
+
+        {/* Mobile Spacer (holds height for fixed top video player on mobile) */}
+        {!isTheaterMode && (
+          <div className="h-[calc(56.25vw+16px)] md:hidden shrink-0" />
+        )}
+
+        {/* Video Player */}
+        <div className={`w-full transition-all ${
+          isTheaterMode 
+            ? "h-full max-h-screen flex items-center justify-center p-0 z-40" 
+            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6"
+        }`}>
           {currentEpisode ? (
             <>
               <FloatingReactions reactions={reactions} />
@@ -242,147 +269,155 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         </div>
 
         {/* Title and Share Link with Zoom Button */}
-        <div className={`flex items-center justify-between gap-2 mb-2.5 shrink-0 ${isTheaterMode ? "p-4" : ""}`}>
-          <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
-            {movie.name} - Tập {currentEpisodeIndex + 1}
-          </h1>
-          <div className="flex items-center gap-2">
-            {/* Zoom / Theater Toggle Button on Desktop */}
-            <button
-              onClick={() => setIsTheaterMode(!isTheaterMode)}
-              className="hidden md:flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 cursor-pointer active:scale-95"
-              title="Bật/Tắt chế độ rạp chiếu (Theater Mode)"
-            >
-              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                {isTheaterMode ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 12v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
-                )}
-              </svg>
-              <span>{isTheaterMode ? "Thu nhỏ" : "Phóng to"}</span>
-            </button>
+        {!isTheaterMode && (
+          <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
+            <h1 className="text-sm md:text-2xl font-bold text-white truncate flex-1">
+              {movie.name} - Tập {currentEpisodeIndex + 1}
+            </h1>
+            <div className="flex items-center gap-2">
+              {/* Zoom / Theater Toggle Button on Desktop */}
+              <button
+                onClick={() => setIsTheaterMode(!isTheaterMode)}
+                className="hidden md:flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 cursor-pointer active:scale-95"
+                title="Bật/Tắt chế độ rạp chiếu (Theater Mode)"
+              >
+                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  {isTheaterMode ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 12v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                  )}
+                </svg>
+                <span>{isTheaterMode ? "Thu nhỏ" : "Phóng to"}</span>
+              </button>
 
-            {/* Copy invite link */}
-            <button
-              onClick={copyLink}
-              className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-855 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0 cursor-pointer active:scale-95"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? "Đã copy" : "Mời bạn"}</span>
-            </button>
+              {/* Copy invite link */}
+              <button
+                onClick={copyLink}
+                className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white px-2.5 py-1.5 rounded-lg text-xs transition-all border border-zinc-800 shrink-0 cursor-pointer active:scale-95"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? "Đã copy" : "Mời bạn"}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Desktop-only Episode Selector */}
-        <div className="hidden md:block overflow-y-auto">
-          {episodes.length > 0 && serverData.length > 0 && (
-            <EpisodeSelector
-              episodes={episodes}
-              currentServerIndex={currentServerIndex}
-              currentEpisodeIndex={currentEpisodeIndex}
-              onSelectEpisode={(idx) => {
-                setCurrentEpisodeIndex(idx);
-                triggerChangeEpisode(currentServerIndex, idx);
-              }}
-              onSelectServer={(idx) => {
-                setCurrentServerIndex(idx);
-                setCurrentEpisodeIndex(0);
-                triggerChangeEpisode(idx, 0);
-              }}
-            />
-          )}
-        </div>
+        {!isTheaterMode && (
+          <div className="hidden md:block w-full">
+            {episodes.length > 0 && serverData.length > 0 && (
+              <EpisodeSelector
+                episodes={episodes}
+                currentServerIndex={currentServerIndex}
+                currentEpisodeIndex={currentEpisodeIndex}
+                onSelectEpisode={(idx) => {
+                  setCurrentEpisodeIndex(idx);
+                  triggerChangeEpisode(currentServerIndex, idx);
+                }}
+                onSelectServer={(idx) => {
+                  setCurrentServerIndex(idx);
+                  setCurrentEpisodeIndex(0);
+                  triggerChangeEpisode(idx, 0);
+                }}
+              />
+            )}
+          </div>
+        )}
 
-        {/* Mobile-only Tabs Navigation */}
-        <div className="flex md:hidden border-b border-zinc-800 bg-zinc-900/30 rounded-t-xl shrink-0">
-          <button
-            onClick={() => setActiveMobileTab("chat")}
-            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "chat" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
-          >
-            Trò chuyện
-          </button>
-          <button
-            onClick={() => setActiveMobileTab("episodes")}
-            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "episodes" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
-          >
-            Tập phim
-          </button>
-          <button
-            onClick={() => setActiveMobileTab("watchers")}
-            className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "watchers" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
-          >
-            Người xem ({watchers.length})
-          </button>
-        </div>
+        {/* Mobile-only Tabs Navigation and Content */}
+        {!isTheaterMode && (
+          <>
+            <div className="flex md:hidden border-b border-zinc-800 bg-zinc-900/30 rounded-t-xl shrink-0">
+              <button
+                onClick={() => setActiveMobileTab("chat")}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "chat" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+              >
+                Trò chuyện
+              </button>
+              <button
+                onClick={() => setActiveMobileTab("episodes")}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "episodes" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+              >
+                Tập phim
+              </button>
+              <button
+                onClick={() => setActiveMobileTab("watchers")}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "watchers" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+              >
+                Người xem ({watchers.length})
+              </button>
+            </div>
 
-        {/* Mobile Tab Content Container */}
-        <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          {activeMobileTab === "chat" && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Emojis Reaction bar inside mobile chat tab */}
-              {isJoined && (
-                <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-900/40 rounded-lg border border-zinc-800/60 mb-2 shrink-0 overflow-x-auto no-scrollbar">
-                  {EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => triggerReaction(emoji)}
-                      className="text-lg hover:scale-125 active:scale-95 transition-all cursor-pointer"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+            {/* Mobile Tab Content Container */}
+            <div className={`flex-1 min-h-0 md:hidden bg-zinc-900/10 rounded-b-xl border border-t-0 border-zinc-800/50 p-3 flex flex-col ${activeMobileTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+              {activeMobileTab === "chat" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  {/* Emojis Reaction bar inside mobile chat tab */}
+                  {isJoined && (
+                    <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-900/40 rounded-lg border border-zinc-800/60 mb-2 shrink-0 overflow-x-auto no-scrollbar">
+                      {EMOJIS.map(emoji => (
+                        <button
+                          key={emoji}
+                          onClick={() => triggerReaction(emoji)}
+                          className="text-lg hover:scale-125 active:scale-95 transition-all cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex-1 min-h-0">
+                    <RoomChat 
+                      messages={messages} 
+                      typingUsers={typingUsers}
+                      onSendMessage={sendMessage} 
+                      onTyping={triggerTyping}
+                    />
+                  </div>
                 </div>
               )}
-              <div className="flex-1 min-h-0">
-                <RoomChat 
-                  messages={messages} 
-                  typingUsers={typingUsers}
-                  onSendMessage={sendMessage} 
-                  onTyping={triggerTyping}
-                />
-              </div>
-            </div>
-          )}
 
-          {activeMobileTab === "episodes" && (
-            <div className="flex-1 overflow-y-auto">
-              {episodes.length > 0 && serverData.length > 0 && (
-                <EpisodeSelector
-                  episodes={episodes}
-                  currentServerIndex={currentServerIndex}
-                  currentEpisodeIndex={currentEpisodeIndex}
-                  onSelectEpisode={(idx) => {
-                    setCurrentEpisodeIndex(idx);
-                    triggerChangeEpisode(currentServerIndex, idx);
-                  }}
-                  onSelectServer={(idx) => {
-                    setCurrentServerIndex(idx);
-                    setCurrentEpisodeIndex(0);
-                    triggerChangeEpisode(idx, 0);
-                  }}
-                />
+              {activeMobileTab === "episodes" && (
+                <div className="flex-1 overflow-y-auto">
+                  {episodes.length > 0 && serverData.length > 0 && (
+                    <EpisodeSelector
+                      episodes={episodes}
+                      currentServerIndex={currentServerIndex}
+                      currentEpisodeIndex={currentEpisodeIndex}
+                      onSelectEpisode={(idx) => {
+                        setCurrentEpisodeIndex(idx);
+                        triggerChangeEpisode(currentServerIndex, idx);
+                      }}
+                      onSelectServer={(idx) => {
+                        setCurrentServerIndex(idx);
+                        setCurrentEpisodeIndex(0);
+                        triggerChangeEpisode(idx, 0);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {activeMobileTab === "watchers" && (
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-blue-400" />
+                    <h3 className="font-semibold text-white text-sm">Danh sách người đang xem</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {watchers.map((w) => (
+                      <div key={w.id} className="flex items-center gap-1.5 bg-zinc-800 px-3 py-1.5 rounded-full text-xs">
+                        <span className="text-zinc-200">{w.name}</span>
+                        {w.name === username && <span className="text-zinc-500">(Bạn)</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          )}
-
-          {activeMobileTab === "watchers" && (
-            <div className="flex-1 overflow-y-auto space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                <h3 className="font-semibold text-white text-sm">Danh sách người đang xem</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {watchers.map((w) => (
-                  <div key={w.id} className="flex items-center gap-1.5 bg-zinc-800 px-3 py-1.5 rounded-full text-xs">
-                    <span className="text-zinc-200">{w.name}</span>
-                    {w.name === username && <span className="text-zinc-500">(Bạn)</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Right Area: Desktop Sidebar */}
@@ -433,3 +468,44 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
     </div>
   );
 }
+
+function KeyboardAndTheaterHandler({ setIsTheaterMode }: { setIsTheaterMode: (val: boolean) => void }) {
+  useEffect(() => {
+    // Esc key to exit theater mode
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsTheaterMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Prevent document body scrolling on mobile when focusing inputs
+    const handleFocus = () => {
+      if (window.innerWidth < 768) {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+      }
+    };
+
+    document.addEventListener("focusin", handleFocus);
+    document.addEventListener("focusout", handleFocus);
+
+    const handleScroll = () => {
+      if (window.innerWidth < 768 && window.scrollY > 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocus);
+      document.removeEventListener("focusout", handleFocus);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [setIsTheaterMode]);
+
+  return null;
+}
+
