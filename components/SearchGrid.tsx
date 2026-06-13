@@ -48,9 +48,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
             name: item.name,
             slug: item.slug,
             origin_name: item.original_name || item.name,
-            poster_url: item.thumb_url || item.poster_url,
-            thumb_url: item.thumb_url || item.poster_url,
-            year: item.year || new Date().getFullYear(),
+            poster_url: item.poster_url,
+            thumb_url: item.thumb_url,
+            year: item.year || '',
             source: 'nguonc' // Tag source as NguonC
           } as any));
           
@@ -73,7 +73,9 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
     const getSmartKey = (item: Movie) => {
       const originName = item.origin_name || item.name || '';
       const normalizedOriginName = originName.toLowerCase().replace(/\s+/g, ' ').trim();
-      return `${normalizedOriginName}-${item.year || 'unknown'}`;
+      // Ignore year in smart key because NguonC search API often doesn't return year,
+      // which causes it to fail to match Ophim/PhimAPI items for metadata overriding.
+      return normalizedOriginName;
     };
 
     // 1. Build maps of priority sources (Ophim, PhimAPI)
@@ -101,7 +103,7 @@ export default function SearchGrid({ initialMovies, keyword }: SearchGridProps) 
           origin_name: priorityMovie.origin_name,
           poster_url: priorityMovie.poster_url,
           thumb_url: priorityMovie.thumb_url,
-          year: priorityMovie.year,
+          year: priorityMovie.year || movie.year,
         };
       }
       return movie;
