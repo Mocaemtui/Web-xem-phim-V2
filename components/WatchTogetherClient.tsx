@@ -299,7 +299,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           ref={ambientCanvasRef}
           width="16"
           height="9"
-          className="absolute inset-0 w-full h-full blur-[140px] opacity-45 pointer-events-none transition-all duration-700"
+          className="absolute inset-0 w-full h-full blur-[80px] opacity-75 pointer-events-none transition-all duration-700"
           style={{ zIndex: 0 }}
         />
       )}
@@ -349,7 +349,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         <div className={`w-full transition-all ${
           isTheaterMode 
             ? "h-full max-h-screen flex items-center justify-end p-0 z-40" 
-            : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6 max-h-[55vh] aspect-video mx-auto"
+            : "relative z-20 bg-transparent p-0 shrink min-h-0 mb-3 md:mb-6 flex-1 flex items-center justify-center"
         }`}>
 
           {currentEpisode ? (

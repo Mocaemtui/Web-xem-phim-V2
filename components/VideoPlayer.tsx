@@ -555,7 +555,7 @@ export default function VideoPlayer({
 
       {/* Player Container */}
       <div 
-        className="relative w-full h-full max-h-full bg-black rounded-lg overflow-hidden group z-10 flex items-center justify-center"
+        className="relative w-full h-full max-h-full bg-transparent rounded-lg overflow-hidden group z-10 flex items-center justify-center"
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
