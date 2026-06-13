@@ -58,11 +58,11 @@ export default function VideoPlayer({
   const [showAutoNext, setShowAutoNext] = useState(false);
   const [autoNextCountdown, setAutoNextCountdown] = useState(5);
   
-  // Aspect Ratio & Zoom Mode (Normal, Stretch)
-  const [zoomMode, setZoomMode] = useState<"normal" | "stretch">("normal");
+  // Aspect Ratio & Zoom Mode (Normal, Cover)
+  const [zoomMode, setZoomMode] = useState<"normal" | "cover">("normal");
 
   const toggleZoomMode = () => {
-    setZoomMode((prev) => (prev === "normal" ? "stretch" : "normal"));
+    setZoomMode((prev) => (prev === "normal" ? "cover" : "normal"));
   };
   
   // Progress Save & Resume Watch
@@ -540,7 +540,7 @@ export default function VideoPlayer({
   };
 
   return (
-    <div className="relative w-full z-10">
+    <div className="relative w-full h-full max-h-full flex items-center justify-center z-10">
 
       {/* Ambient Light Canvas (Glow) */}
       {ambientActive && videoUrl && (
@@ -555,7 +555,7 @@ export default function VideoPlayer({
 
       {/* Player Container */}
       <div 
-        className="relative w-full bg-black rounded-lg overflow-hidden group z-10"
+        className="relative w-full h-full max-h-full bg-black rounded-lg overflow-hidden group z-10 flex items-center justify-center"
         onMouseMove={resetControlsTimer}
         onMouseLeave={() => {
           if (videoRef.current && !videoRef.current.paused) {
@@ -570,36 +570,36 @@ export default function VideoPlayer({
             crossOrigin="anonymous"
             playsInline
             onClick={togglePlay}
-            className="w-full aspect-video relative z-10 cursor-pointer"
+            className="max-w-full max-h-full aspect-video relative z-10 cursor-pointer"
             style={{
-              objectFit: zoomMode === "stretch" ? "fill" : "contain",
+              objectFit: zoomMode === "cover" ? "cover" : "contain",
               transform: "scale(1)",
               transition: "object-fit 0.3s ease"
             }}
             onTimeUpdate={handleTimeUpdate}
             onPlay={() => {
-              setIsPlaying(true);
-              if (onPlaySync) onPlaySync();
+               setIsPlaying(true);
+               if (onPlaySync) onPlaySync();
             }}
             onPause={() => {
-              setIsPlaying(false);
-              if (onPauseSync) onPauseSync();
+               setIsPlaying(false);
+               if (onPauseSync) onPauseSync();
             }}
             onEnded={() => {
-              setIsPlaying(false);
-              if (onPauseSync) onPauseSync();
+               setIsPlaying(false);
+               if (onPauseSync) onPauseSync();
             }}
           />
         ) : embedUrl ? (
           <iframe
             src={embedUrl}
-            className="w-full aspect-video"
+            className="max-w-full max-h-full aspect-video"
             allowFullScreen
             allow="autoplay; encrypted-media"
             sandbox="allow-scripts allow-same-origin allow-presentation"
           />
         ) : (
-          <div className="w-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+          <div className="max-w-full max-h-full aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
             <p className="text-zinc-400">Không tìm thấy link phim</p>
           </div>
         )}
@@ -712,7 +712,7 @@ export default function VideoPlayer({
                   onClick={toggleZoomMode}
                   className={`transition-colors p-1 rounded-md hover:bg-zinc-800 ${zoomMode !== "normal" ? "text-blue-400" : "text-zinc-500"}`}
                   title={
-                    zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" : "Tỉ lệ: Kéo giãn đầy khung"
+                    zoomMode === "normal" ? "Tỉ lệ: Khớp màn hình" : "Tỉ lệ: Phóng to đầy khung"
                   }
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
