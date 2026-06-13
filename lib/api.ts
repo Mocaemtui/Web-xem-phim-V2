@@ -292,7 +292,7 @@ export async function getChiTietPhim(
 
   if (nguoncRes) {
     if (!baseMovie) baseMovie = nguoncRes;
-    allEpisodes.push(...(nguoncRes.episodes || []));
+    allEpisodes.push(...(nguoncRes.episodes?.map(e => ({ ...e, server_name: `NguonC - ${e.server_name}` })) || []));
   }
 
   if (!baseMovie) return null;
