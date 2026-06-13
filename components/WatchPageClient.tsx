@@ -58,62 +58,7 @@ export default function WatchPageClient({ movie, posterUrl }: WatchPageClientPro
     setSelectedServerIndex(initialIdx);
   }, [movie.slug, movie.episodes]);
 
-  // Client-side fetch for NguonC to bypass Vercel DataCenter Cloudflare blocks
-  useEffect(() => {
-    const fetchNguonC = async () => {
-      try {
-        let res = await fetch(`https://phim.nguonc.com/api/film/${movie.slug}`);
-        let data = res.ok ? await res.json() : null;
 
-        // --- SMART CROSS-API MATCHING (FALLBACK) ---
-        // Nếu NguonC không có phim theo slug này, thử tìm theo tên tiếng Anh (origin_name)
-        if (!data?.movie?.episodes) {
-          const originName = movie.origin_name || movie.name;
-          if (originName) {
-            const searchRes = await fetch(`https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(originName)}`);
-            if (searchRes.ok) {
-              const searchData = await searchRes.json();
-              const match = searchData?.items?.find((m: any) => 
-                (m.original_name?.toLowerCase() === originName.toLowerCase() || m.name?.toLowerCase() === originName.toLowerCase())
-              );
-              if (match && match.slug !== movie.slug) {
-                res = await fetch(`https://phim.nguonc.com/api/film/${match.slug}`);
-                data = res.ok ? await res.json() : null;
-              }
-            }
-          }
-        }
-        // -------------------------------------------
-        
-        if (data?.movie?.episodes) {
-          const nguonCEps = data.movie.episodes.map((epServer: any) => ({
-            server_name: `NguonC - ${epServer.server_name}`,
-            server_data: epServer.items.map((item: any) => ({
-              name: item.name,
-              slug: item.slug,
-              filename: item.name,
-              link: "",
-              link_embed: item.embed,
-              link_m3u8: "" // NguonC always empty for iframe fallback
-            }))
-          }));
-          
-          setEpisodes(prev => {
-            if (prev.some(e => e.server_name.startsWith('NguonC'))) return prev;
-            return [...prev, ...nguonCEps];
-          });
-        }
-      } catch (error) {
-        console.error("Lỗi tải NguonC (Client):", error);
-      }
-    };
-
-    // Only fetch if NguonC hasn't already been provided by SSR
-    if (!episodes.some(e => e.server_name.startsWith('NguonC'))) {
-      fetchNguonC();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movie.slug]);
 
   useEffect(() => {
     if (!isRestored) {
