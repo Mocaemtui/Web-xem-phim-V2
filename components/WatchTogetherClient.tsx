@@ -289,7 +289,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
   const EMOJIS = ['❤️', '✨', '💦', '😇', '😢', '🤨', '😏', '🤡', '😈', '💀'];
 
   return (
-    <div ref={containerRef} className="relative h-[100dvh] md:h-screen bg-zinc-950 flex flex-col md:flex-row overflow-hidden">
+    <div ref={containerRef} className="relative h-[100dvh] md:h-screen bg-zinc-950 flex flex-col overflow-hidden">
       {/* Global Background Ambient Glow Canvas */}
       {ambientActive && (
         <canvas
@@ -314,15 +314,17 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       <KeyboardAndTheaterHandler setIsTheaterMode={setIsTheaterMode} containerRef={containerRef} />
 
 
-      {/* Left Area: Video Player & Controls */}
-      <div 
-        className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
-          isTheaterMode 
-            ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
-            : "h-full md:h-screen overflow-hidden p-3 md:p-6 bg-transparent"
-        }`}
-        onDoubleClick={() => setIsTheaterMode(prev => !prev)}
-      >
+      {/* Main workspace: Side-by-side Player and Chat Sidebar */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden relative w-full">
+        {/* Left Area: Video Player & Controls */}
+        <div 
+          className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
+            isTheaterMode 
+              ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
+              : "h-full overflow-hidden p-3 md:p-6 bg-transparent"
+          }`}
+          onDoubleClick={() => setIsTheaterMode(prev => !prev)}
+        >
         {isTheaterMode && (
           <button
             onClick={() => setIsTheaterMode(false)}
@@ -418,27 +420,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
           </div>
         )}
 
-        {/* Desktop-only Episode Selector */}
-        {!isTheaterMode && (
-          <div className="hidden md:block w-full mt-auto max-h-[30vh] overflow-y-auto pr-1 shrink-0 border-t border-zinc-800/10 pt-4">
-            {episodes.length > 0 && serverData.length > 0 && (
-              <EpisodeSelector
-                episodes={episodes}
-                currentServerIndex={currentServerIndex}
-                currentEpisodeIndex={currentEpisodeIndex}
-                onSelectEpisode={(idx) => {
-                  setCurrentEpisodeIndex(idx);
-                  triggerChangeEpisode(currentServerIndex, idx);
-                }}
-                onSelectServer={(idx) => {
-                  setCurrentServerIndex(idx);
-                  setCurrentEpisodeIndex(0);
-                  triggerChangeEpisode(idx, 0);
-                }}
-              />
-            )}
-          </div>
-        )}
+
 
         {/* Mobile-only Tabs Navigation and Content */}
         {!isTheaterMode && (
@@ -592,7 +574,30 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         </div>
       </div>
 
+      {/* Close the Side-by-side Video/Chat container */}
+      </div>
 
+      {/* Bottom Section: Full-width Standalone Episode Selector (Desktop-only) */}
+      {!isTheaterMode && (
+        <div className="hidden md:block w-full shrink-0 px-6 py-4 bg-zinc-950/25 border-t border-zinc-900/40 relative z-20 max-h-[30vh] overflow-y-auto">
+          {episodes.length > 0 && serverData.length > 0 && (
+            <EpisodeSelector
+              episodes={episodes}
+              currentServerIndex={currentServerIndex}
+              currentEpisodeIndex={currentEpisodeIndex}
+              onSelectEpisode={(idx) => {
+                setCurrentEpisodeIndex(idx);
+                triggerChangeEpisode(currentServerIndex, idx);
+              }}
+              onSelectServer={(idx) => {
+                setCurrentServerIndex(idx);
+                setCurrentEpisodeIndex(0);
+                triggerChangeEpisode(idx, 0);
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -601,14 +606,28 @@ function KeyboardAndTheaterHandler({
   setIsTheaterMode, 
   containerRef 
 }: { 
-  setIsTheaterMode: (val: boolean) => void;
+  setIsTheaterMode: React.Dispatch<React.SetStateAction<boolean>>;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   useEffect(() => {
-    // Esc key to exit theater mode (using capture to bypass focus/propagation issues)
+    // Esc key & 'z' key to toggle theater mode (using capture to bypass focus/propagation issues)
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key events when typing in input/textarea/contenteditable fields
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.isContentEditable)
+      ) {
+        return;
+      }
+
       if (e.key === "Escape") {
         setIsTheaterMode(false);
+      } else if (e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        setIsTheaterMode(prev => !prev);
       }
     };
     document.addEventListener("keydown", handleKeyDown, { capture: true });
