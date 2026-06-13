@@ -287,7 +287,7 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
       <div 
         className={`flex-1 flex flex-col transition-all duration-300 group/theater relative z-10 ${
           isTheaterMode 
-            ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-center" 
+            ? "h-screen w-full p-0 bg-zinc-950/80 backdrop-blur-sm overflow-hidden justify-center items-end" 
             : "h-full md:h-screen overflow-hidden md:overflow-y-auto p-3 md:p-6 bg-transparent"
         }`}
         onDoubleClick={() => setIsTheaterMode(prev => !prev)}
@@ -312,9 +312,10 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         {/* Video Player */}
         <div className={`w-full transition-all ${
           isTheaterMode 
-            ? "h-full max-h-screen flex items-center justify-center p-0 z-40" 
+            ? "h-full max-h-screen flex items-center justify-end p-0 z-40" 
             : "fixed md:relative top-0 left-0 right-0 z-40 md:z-20 bg-black md:bg-transparent p-2 md:p-0 shrink-0 mb-3 md:mb-6"
         }`}>
+
           {currentEpisode ? (
             <>
               <FloatingReactions reactions={reactions} />
@@ -410,22 +411,22 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
         {/* Mobile-only Tabs Navigation and Content */}
         {!isTheaterMode && (
           <>
-            <div className="flex md:hidden border-b border-zinc-800 bg-zinc-900/30 rounded-t-xl shrink-0">
+            <div className="flex md:hidden border-b border-zinc-800/40 bg-zinc-950/20 rounded-t-xl shrink-0">
               <button
                 onClick={() => setActiveMobileTab("chat")}
-                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "chat" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "chat" ? "border-blue-500 text-blue-400" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
               >
                 Trò chuyện
               </button>
               <button
                 onClick={() => setActiveMobileTab("episodes")}
-                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "episodes" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "episodes" ? "border-blue-500 text-blue-400" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
               >
                 Tập phim
               </button>
               <button
                 onClick={() => setActiveMobileTab("watchers")}
-                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "watchers" ? "border-blue-500 text-blue-400 bg-zinc-900/20" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+                className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 transition-colors ${activeMobileTab === "watchers" ? "border-blue-500 text-blue-400" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
               >
                 Người xem ({watchers.length})
               </button>
@@ -437,7 +438,8 @@ export default function WatchTogetherClient({ movie, posterUrl, roomId }: WatchT
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Emojis Reaction bar inside mobile chat tab */}
                   {isJoined && (
-                    <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-900/40 rounded-lg border border-zinc-800/60 mb-2 shrink-0 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 justify-center py-2 px-1 bg-zinc-950/20 rounded-lg border border-zinc-900/10 mb-2 shrink-0 overflow-x-auto no-scrollbar">
+
                       {EMOJIS.map(emoji => (
                         <button
                           key={emoji}
